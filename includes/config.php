@@ -11,9 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 /** Цвета мантий: ключ хранится в базе, значение показывается людям. */
 function gr_colors() {
 	return array(
-		'red'    => 'Красный',
-		'blue'   => 'Синий',
-		'green'  => 'Зелёный',
+		'red'    => 'Бордовый',
+		'blue'   => 'Тёмно-синий',
+		'green'  => 'Изумруд',
 		'purple' => 'Фиолетовый',
 		'black'  => 'Чёрный',
 	);
@@ -22,10 +22,10 @@ function gr_colors() {
 /** Цвета для кружков-образцов и заглушек фото. */
 function gr_color_hex() {
 	return array(
-		'red'    => '#c62828',
-		'blue'   => '#1e4fa3',
-		'green'  => '#2e7d32',
-		'purple' => '#6a1b9a',
+		'red'    => '#7d1d2c',
+		'blue'   => '#262a5c',
+		'green'  => '#0f5a46',
+		'purple' => '#4a2346',
 		'black'  => '#1b1b1d',
 	);
 }
@@ -34,26 +34,21 @@ function gr_color_hex() {
 function gr_sizes() {
 	return array(
 		'kids'     => 'Детский',
-		'standard' => 'Стандартный',
-		'long'     => 'Длинный',
+		'standard' => 'Стандарт',
+		'giant'    => 'Великан',
 	);
 }
 
-/**
- * Размеры, которые есть у цвета. Не у всех цветов есть все размеры:
- * здесь перечислено, каких размеров у цвета НЕТ.
- */
+/** Размеры, которые есть у цвета: детский — у всех, кроме фиолетового; великан — только бордовый и изумруд. */
 function gr_color_sizes( $color ) {
-	$missing = array(
-		'purple' => array( 'kids' ), // фиолетовых детских мантий нет
+	$map = array(
+		'red'    => array( 'kids', 'standard', 'giant' ),
+		'blue'   => array( 'kids', 'standard' ),
+		'green'  => array( 'kids', 'standard', 'giant' ),
+		'purple' => array( 'standard' ),
+		'black'  => array( 'kids', 'standard' ),
 	);
-	$sizes = gr_sizes();
-	if ( isset( $missing[ $color ] ) ) {
-		foreach ( $missing[ $color ] as $size ) {
-			unset( $sizes[ $size ] );
-		}
-	}
-	return $sizes;
+	return array_intersect_key( gr_sizes(), array_flip( $map[ $color ] ?? array() ) );
 }
 
 /** Есть ли такая мантия (цвет + размер) в прокате вообще. */
@@ -96,14 +91,47 @@ function gr_label( $list, $key ) {
  * Цены и настройки (меняются в «Прокат мантий → Настройки»)
  * ---------------------------------------------------------------------- */
 
-/** Цена аренды одной мантии за сутки (₸). */
-function gr_price_per_day() {
-	return (int) get_option( 'gr_price_per_day', 3000 );
+/**
+ * Цена одной мантии за аренду в зависимости от количества в брони:
+ * [ от скольки мантий => цена ]. Вся бронь идёт по одной цене.
+ */
+function gr_price_tiers() {
+	return array(
+		1  => 5000,
+		3  => 3000,
+		5  => 2500,
+		10 => 2000,
+	);
 }
 
-/** Стоимость доставки и стоимость забора мантий — каждая отдельно (₸). */
+/** Цена одной мантии при таком количестве в брони. */
+function gr_unit_price( $qty ) {
+	$price = 0;
+	foreach ( gr_price_tiers() as $from => $tier_price ) {
+		if ( $qty >= $from ) {
+			$price = $tier_price;
+		}
+	}
+	return $price;
+}
+
+/** От скольки мантий одна — бесплатно для организатора. */
+function gr_free_gown_from() {
+	return 20;
+}
+
+/** Длительность аренды в Шымкенте (часы) и время, когда можно начать. */
+function gr_rental_hours() {
+	return 3;
+}
+
+function gr_start_times() {
+	return array( '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00' );
+}
+
+/** Доставки нет — только самовывоз; доставка (бесплатно) возможна от этого количества. */
 function gr_delivery_fee() {
-	return (int) get_option( 'gr_delivery_fee', 3000 );
+	return 0;
 }
 
 /** Адрес пункта самовывоза (меняется в «Настройках»). */
@@ -121,9 +149,14 @@ function gr_2gis_url() {
 	return (string) get_option( 'gr_2gis_url', 'https://2gis.kz/shymkent/geo/70000001114627327' );
 }
 
-/** Доставка и забор бесплатны, если мантий в заказе ОТ этого числа (включительно). */
+/** Доставка возможна (бесплатно) от этого количества мантий в брони. */
 function gr_free_delivery_from() {
-	return (int) get_option( 'gr_free_delivery_from', 20 );
+	return (int) get_option( 'gr_free_delivery_from', 100 );
+}
+
+/** Email, на который приходят брони и сообщения с сайта (меняется в «Настройках»). */
+function gr_contact_email() {
+	return (string) get_option( 'gr_contact_email', 'Aizhansaiymova@gmail.com' );
 }
 
 /** Ссылка на фото мантии данного цвета (или пустая строка). */
@@ -214,34 +247,33 @@ function gr_items_total_quantity( $items ) {
 }
 
 /**
- * Считает стоимость заказа.
+ * Считает стоимость заказа: цена за аренду (не за сутки) по ступени количества,
+ * от 20 мантий одна бесплатно. Доставка (от 100 шт.) бесплатная.
+ * Параметры дат и доставки оставлены для совместимости вызовов.
  *
- * @return array days, quantity, rental, delivery_fee, pickup_fee, total, free_delivery
+ * @return array quantity, unit_price, free_gowns, rental, delivery_fee, pickup_fee, total, free_delivery
  */
-function gr_calc_totals( $items, $date_from, $date_to, $delivery, $pickup ) {
-	$qty  = gr_items_total_quantity( $items );
-	$days = ( gr_is_valid_date( $date_from ) && gr_is_valid_date( $date_to ) && $date_to >= $date_from )
-		? gr_count_days( $date_from, $date_to )
-		: 0;
-
-	$free   = $qty >= gr_free_delivery_from();
-	$fee    = $free ? 0 : gr_delivery_fee();
-	$rental = $days * gr_price_per_day() * $qty;
-
-	// Доставка — туда и обратно: забрать мантии входит в её стоимость.
-	// Отдельно платят, только если нужно лишь забрать (без доставки).
-	$delivery_fee = $delivery ? $fee : 0;
-	$pickup_fee   = ( $pickup && ! $delivery ) ? $fee : 0;
+function gr_calc_totals( $items, $date_from = '', $date_to = '', $delivery = false, $pickup = false ) {
+	$qty   = gr_items_total_quantity( $items );
+	$unit  = gr_unit_price( $qty );
+	$freeN = $qty >= gr_free_gown_from() ? 1 : 0;
+	$rent  = $unit * ( $qty - $freeN );
 
 	return array(
-		'days'          => $days,
 		'quantity'      => $qty,
-		'rental'        => $rental,
-		'delivery_fee'  => $delivery_fee,
-		'pickup_fee'    => $pickup_fee,
-		'total'         => $rental + $delivery_fee + $pickup_fee,
-		'free_delivery' => $free,
+		'unit_price'    => $unit,
+		'free_gowns'    => $freeN,
+		'rental'        => $rent,
+		'delivery_fee'  => 0,
+		'pickup_fee'    => 0,
+		'total'         => $rent,
+		'free_delivery' => $qty >= gr_free_delivery_from(),
 	);
+}
+
+/** Конец аренды: время начала + 3 часа («11:30» → «14:30»). */
+function gr_end_time( $time ) {
+	return gmdate( 'H:i', strtotime( '1970-01-01 ' . $time . ' UTC' ) + gr_rental_hours() * HOUR_IN_SECONDS );
 }
 
 /* -------------------------------------------------------------------------
@@ -274,7 +306,7 @@ function gr_money( $amount ) {
 	return number_format( (int) $amount, 0, ',', ' ' ) . ' ₸';
 }
 
-/** Позиция для людей: «Красный, Детский × 2» */
+/** Позиция для людей: «Бордовый, Детский × 2» */
 function gr_item_label( $item ) {
 	$item = (array) $item;
 	return gr_label( gr_colors(), $item['color'] ) . ', ' . gr_label( gr_sizes(), $item['size'] ) . ' × ' . (int) $item['quantity'];

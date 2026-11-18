@@ -22,7 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function gr_register_assets() {
 	wp_register_style( 'gr-fonts', 'https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap', array(), null );
-	wp_register_style( 'gr-catalog', GR_URL . 'public/booking.css', array( 'gr-fonts' ), GR_VERSION );
+	wp_register_style( 'gr-ladder', GR_URL . 'public/ladder.css', array(), GR_VERSION );
+	wp_register_style( 'gr-catalog', GR_URL . 'public/booking.css', array( 'gr-fonts', 'gr-ladder' ), GR_VERSION );
 	wp_register_script( 'gr-catalog', GR_URL . 'public/booking.js', array(), GR_VERSION, true );
 
 	wp_localize_script(
@@ -31,8 +32,8 @@ function gr_register_assets() {
 		array(
 			'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
 			'nonce'        => wp_create_nonce( 'gr_public' ),
-			'pricePerDay'  => gr_price_per_day(),
-			'deliveryFee'  => gr_delivery_fee(),
+			'tiers'        => gr_price_tiers(),
+			'freeGownFrom' => gr_free_gown_from(),
 			'freeFrom'     => gr_free_delivery_from(),
 			'today'        => current_time( 'Y-m-d' ),
 			'colors'       => gr_colors(),
@@ -66,23 +67,28 @@ add_shortcode( 'gown_booking', 'gr_catalog_shortcode' );
  * ---------------------------------------------------------------------- */
 
 /**
- * Проверка дат для клиентов сайта (строже, чем в админке):
- * нельзя бронировать на прошедшие даты.
+ * Проверка даты и времени для клиентов сайта: аренда в Шымкенте — 3 часа,
+ * начало с 11:00 до 14:00, не в прошлом.
  */
-function gr_public_date_error( $from, $to ) {
-	if ( ! gr_is_valid_date( $from ) || ! gr_is_valid_date( $to ) ) {
-		return 'Укажите даты аренды.';
+function gr_public_slot_error( $date, $time ) {
+	if ( ! gr_is_valid_date( $date ) ) {
+		return 'Укажите дату аренды.';
 	}
-	if ( $from < current_time( 'Y-m-d' ) ) {
-		return 'Нельзя забронировать на прошедшую дату.';
+	if ( ! in_array( $time, gr_start_times(), true ) ) {
+		return 'Выберите время начала: с 11:00 до 14:00.';
 	}
-	if ( $to < $from ) {
-		return 'Дата возврата не может быть раньше даты получения.';
-	}
-	if ( gr_count_days( $from, $to ) > gr_max_rental_days() ) {
-		return 'Максимальный срок аренды — ' . gr_max_rental_days() . ' дней.';
+	if ( $date . ' ' . $time <= current_time( 'Y-m-d H:i' ) ) {
+		return 'Это время уже прошло — выберите другое.';
 	}
 	return '';
+}
+
+/** Дата и время из запроса сайта. */
+function gr_public_slot() {
+	return array(
+		isset( $_POST['date'] ) ? sanitize_text_field( wp_unslash( $_POST['date'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification -- nonce проверен в обработчике
+		isset( $_POST['time'] ) ? sanitize_text_field( wp_unslash( $_POST['time'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification
+	);
 }
 
 /* -------------------------------------------------------------------------
@@ -92,19 +98,17 @@ function gr_public_date_error( $from, $to ) {
 function gr_ajax_quote() {
 	check_ajax_referer( 'gr_public', 'nonce' );
 
-	$from     = isset( $_POST['date_from'] ) ? sanitize_text_field( wp_unslash( $_POST['date_from'] ) ) : '';
-	$to       = isset( $_POST['date_to'] ) ? sanitize_text_field( wp_unslash( $_POST['date_to'] ) ) : '';
-	$items    = gr_normalize_items( isset( $_POST['items'] ) ? wp_unslash( $_POST['items'] ) : '' );
-	$delivery = ! empty( $_POST['delivery'] );
+	list( $date, $time ) = gr_public_slot();
+	$items               = gr_normalize_items( isset( $_POST['items'] ) ? wp_unslash( $_POST['items'] ) : '' );
 
-	$date_error = gr_public_date_error( $from, $to );
-	if ( $date_error ) {
-		wp_send_json_error( array( 'message' => $date_error ) );
+	$slot_error = gr_public_slot_error( $date, $time );
+	if ( $slot_error ) {
+		wp_send_json_error( array( 'message' => $slot_error ) );
 	}
 
 	// Клиенту не показываем, СКОЛЬКО свободно: только есть / нет,
 	// и какие из выбранных позиций в нужном количестве не набираются.
-	$matrix = gr_get_availability_matrix( $from, $to );
+	$matrix = gr_get_availability_matrix( $date, $date, 0, $time );
 	$public = array();
 	foreach ( $matrix as $color => $sizes ) {
 		foreach ( $sizes as $size => $free ) {
@@ -123,7 +127,7 @@ function gr_ajax_quote() {
 		array(
 			'matrix' => $public,
 			'short'  => $short,
-			'totals' => gr_calc_totals( $items, $from, $to, $delivery, $delivery ),
+			'totals' => gr_calc_totals( $items ),
 		)
 	);
 }
@@ -142,12 +146,11 @@ function gr_ajax_submit_booking() {
 		wp_send_json_success( array( 'message' => 'Спасибо! Заявка отправлена.' ) );
 	}
 
-	$from = isset( $_POST['date_from'] ) ? sanitize_text_field( wp_unslash( $_POST['date_from'] ) ) : '';
-	$to   = isset( $_POST['date_to'] ) ? sanitize_text_field( wp_unslash( $_POST['date_to'] ) ) : '';
+	list( $date, $time ) = gr_public_slot();
 
-	$date_error = gr_public_date_error( $from, $to );
-	if ( $date_error ) {
-		wp_send_json_error( array( 'errors' => array( $date_error ) ) );
+	$slot_error = gr_public_slot_error( $date, $time );
+	if ( $slot_error ) {
+		wp_send_json_error( array( 'errors' => array( $slot_error ) ) );
 	}
 
 	// Закон РК «О персональных данных и их защите»: нужно согласие клиента.
@@ -157,8 +160,11 @@ function gr_ajax_submit_booking() {
 
 	// Статус и источник задаёт сервер, а не браузер.
 	$input           = wp_unslash( $_POST );
-	$input['status'] = 'new';
-	$input['source'] = 'site';
+	$input['status']    = 'new';
+	$input['source']    = 'site';
+	$input['date_from'] = $date;
+	$input['date_to']   = $date;
+	$input['time_from'] = $time;
 	// С сайта: доставка = привезём и заберём сами; самовывоз = без адреса.
 	$input['pickup']      = ! empty( $input['delivery'] ) ? 1 : 0;
 	$input['pickup_time'] = '';
@@ -180,23 +186,30 @@ function gr_ajax_submit_booking() {
 	$booking = gr_get_booking( $result );
 	gr_send_new_booking_emails( $booking );
 
-	$lines = array();
+	// Данные для квитанции на странице — разметку строит booking.js.
+	$totals = gr_calc_totals( $booking->items );
+	$items  = array();
 	foreach ( $booking->items as $item ) {
-		$lines[] = gr_item_label( $item );
+		$items[] = array(
+			'color'    => gr_label( gr_colors(), $item->color ),
+			'size'     => gr_label( gr_sizes(), $item->size ),
+			'quantity' => (int) $item->quantity,
+		);
 	}
 
 	wp_send_json_success(
 		array(
-			'id'      => (int) $booking->id,
-			'message' => sprintf(
-				'Номер вашей брони: %d. %s; с %s по %s. Итого: %s. Мы свяжемся с вами по номеру %s для подтверждения.',
-				$booking->id,
-				implode( '; ', $lines ),
-				gr_format_date( $booking->date_from ),
-				gr_format_date( $booking->date_to ),
-				gr_money( $booking->total_price ),
-				$booking->phone
-			),
+			'id'         => (int) $booking->id,
+			'date'       => date_i18n( 'j F Y, l', strtotime( $booking->date_from ) ),
+			'time'       => $booking->time_from . '–' . gr_end_time( $booking->time_from ),
+			'items'      => $items,
+			'quantity'   => $totals['quantity'],
+			'unit_price' => gr_money( $totals['unit_price'] ),
+			'free_gowns' => $totals['free_gowns'],
+			'total'      => gr_money( $booking->total_price ),
+			'delivery'   => (bool) $booking->delivery,
+			'address'    => $booking->delivery ? $booking->address : gr_pickup_address(),
+			'phone'      => $booking->phone,
 		)
 	);
 }

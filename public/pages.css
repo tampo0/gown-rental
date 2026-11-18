@@ -679,3 +679,5 @@
 .grp-privacy .grp-title { font-size: clamp(1.9rem, 4.6vw, 4.2rem); overflow-wrap: normal; word-break: keep-all; }
 @media (max-width: 600px) { .grp-privacy .grp-title { font-size: 1.4rem; } }
 .gr-landing-page .site-footer a { color: inherit; text-decoration: underline; text-decoration-color: #d6b25e; text-underline-offset: 3px; }
+
+.grp .gr-ladder { margin: 16px 0; max-width: 560px; }

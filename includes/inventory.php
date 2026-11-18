@@ -57,26 +57,37 @@ function gr_set_stock( $color, $size, $quantity ) {
 }
 
 /**
- * Максимальное число занятых мантий в любой день периода [$from; $to].
- *
- * Бронь занимает мантию с date_from по date_to включительно.
- * Считаем по дням, а не просто суммой: две брони, которые идут одна за другой
- * (например, 20–22 и 23–25), не должны занимать две мантии одновременно.
- *
- * @param int $exclude_id  Бронь, которую не учитывать (при редактировании — саму себя).
+ * Интервал аренды в секундах [начало; конец).
+ * С временем (Шымкент): 3 часа от начала в день date_from.
+ * Без времени (другие города, вносит админ): целые дни с date_from по date_to включительно.
  */
-function gr_get_peak_usage( $color, $size, $from, $to, $exclude_id = 0 ) {
+function gr_interval( $date_from, $date_to, $time = '' ) {
+	if ( $time ) {
+		$start = strtotime( $date_from . ' ' . $time . ' UTC' );
+		return array( $start, $start + gr_rental_hours() * HOUR_IN_SECONDS );
+	}
+	return array( strtotime( $date_from . ' 00:00 UTC' ), strtotime( $date_to . ' 00:00 UTC' ) + DAY_IN_SECONDS );
+}
+
+/**
+ * Максимум одновременно занятых мантий в любой момент периода.
+ *
+ * Пиковая занятость, а не сумма: две аренды одна за другой (11:00–14:00 и 14:00–17:00)
+ * одну мантию одновременно не занимают.
+ *
+ * @param string $time       Время начала (ЧЧ:ММ) или '' — тогда период целыми днями.
+ * @param int    $exclude_id Бронь, которую не учитывать (при редактировании — саму себя).
+ */
+function gr_get_peak_usage( $color, $size, $from, $to, $exclude_id = 0, $time = '' ) {
 	global $wpdb;
 	$bookings = gr_bookings_table();
 	$items    = gr_items_table();
 
-	// Берём позиции нужного цвета и размера из активных броней,
-	// чей период пересекается с [$from; $to]: бронь начинается не позже
-	// нашего конца и заканчивается не раньше нашего начала.
+	// Сначала грубо отбираем брони, чьи ДНИ пересекаются с нашими, — точное время проверим ниже.
 	$statuses     = gr_active_statuses();
 	$placeholders = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
 
-	$sql = "SELECT b.date_from, b.date_to, i.quantity
+	$sql = "SELECT b.date_from, b.date_to, b.time_from, i.quantity
 		FROM {$items} i
 		INNER JOIN {$bookings} b ON b.id = i.booking_id
 		WHERE i.color = %s AND i.size = %s AND b.id <> %d
@@ -85,25 +96,30 @@ function gr_get_peak_usage( $color, $size, $from, $to, $exclude_id = 0 ) {
 
 	$params = array_merge( array( $color, $size, (int) $exclude_id ), $statuses, array( $to, $from ) );
 	$rows   = $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
-
 	if ( ! $rows ) {
 		return 0;
 	}
 
-	// Идём по дням периода и ищем день с наибольшей занятостью.
+	list( $q_start, $q_end ) = gr_interval( $from, $to, $time );
+
+	$spans = array();
+	foreach ( $rows as $row ) {
+		list( $start, $end ) = gr_interval( $row->date_from, $row->date_to, $row->time_from );
+		if ( $start < $q_end && $end > $q_start ) {
+			$spans[] = array( max( $start, $q_start ), $end, (int) $row->quantity );
+		}
+	}
+
+	// Занятость максимальна в один из моментов начала (нашего или чужого) — проверяем их.
 	$peak = 0;
-	$day  = new DateTime( $from );
-	$end  = new DateTime( $to );
-	while ( $day <= $end ) {
-		$d    = $day->format( 'Y-m-d' );
+	foreach ( array_merge( array( $q_start ), array_column( $spans, 0 ) ) as $moment ) {
 		$used = 0;
-		foreach ( $rows as $row ) {
-			if ( $row->date_from <= $d && $row->date_to >= $d ) {
-				$used += (int) $row->quantity;
+		foreach ( $spans as $span ) {
+			if ( $span[0] <= $moment && $moment < $span[1] ) {
+				$used += $span[2];
 			}
 		}
 		$peak = max( $peak, $used );
-		$day->modify( '+1 day' );
 	}
 	return $peak;
 }
@@ -112,25 +128,25 @@ function gr_get_peak_usage( $color, $size, $from, $to, $exclude_id = 0 ) {
  * Сколько мантий свободно на ВЕСЬ период аренды [$from; $to].
  * Если на складе уменьшили количество (химчистка, брак) — свободных станет меньше сразу.
  */
-function gr_get_available( $color, $size, $from, $to, $exclude_id = 0 ) {
+function gr_get_available( $color, $size, $from, $to, $exclude_id = 0, $time = '' ) {
 	if ( ! gr_is_offered( $color, $size ) ) {
 		return 0; // такого размера у этого цвета нет
 	}
 	$stock = gr_get_stock( $color, $size );
-	$used  = gr_get_peak_usage( $color, $size, $from, $to, $exclude_id );
+	$used  = gr_get_peak_usage( $color, $size, $from, $to, $exclude_id, $time );
 
 	return max( 0, $stock - $used );
 }
 
 /**
  * Свободно на период для всех цветов и размеров сразу:
- * [ 'red' => [ 'kids' => 3, 'standard' => 10, 'long' => 0 ], ... ]
+ * [ 'red' => [ 'kids' => 3, 'standard' => 10, 'giant' => 0 ], ... ]
  */
-function gr_get_availability_matrix( $from, $to, $exclude_id = 0 ) {
+function gr_get_availability_matrix( $from, $to, $exclude_id = 0, $time = '' ) {
 	$matrix = array();
 	foreach ( array_keys( gr_colors() ) as $color ) {
 		foreach ( array_keys( gr_color_sizes( $color ) ) as $size ) {
-			$matrix[ $color ][ $size ] = gr_get_available( $color, $size, $from, $to, $exclude_id );
+			$matrix[ $color ][ $size ] = gr_get_available( $color, $size, $from, $to, $exclude_id, $time );
 		}
 	}
 	return $matrix;

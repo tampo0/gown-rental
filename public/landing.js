@@ -1,4 +1,4 @@
-/* Главная: проверка наличия по датам прямо на первом экране. */
+/* Главная: проверка наличия по дате и времени прямо на первом экране. */
 (function () {
 	'use strict';
 
@@ -7,8 +7,8 @@
 	if (!cfg || !root) return;
 
 	var form = root.querySelector('.grl-slate');
-	var from = form.elements.from;
-	var to = form.elements.to;
+	var from = form.elements.date;
+	var to = form.elements.time; // время начала аренды
 	var hint = root.querySelector('[data-grl-hint]');
 	var counts = root.querySelector('[data-grl-counts]');
 	var cta = root.querySelector('[data-grl-cta]');
@@ -17,7 +17,6 @@
 	var requestId = 0;
 
 	from.min = cfg.today;
-	to.min = cfg.today;
 
 	function fmt(iso) {
 		var p = iso.split('-');
@@ -28,13 +27,13 @@
 	function catalogUrl() {
 		if (!from.value || !to.value) return cfg.catalogUrl;
 		var sep = cfg.catalogUrl.indexOf('?') === -1 ? '?' : '&';
-		return cfg.catalogUrl + sep + 'from=' + encodeURIComponent(from.value) + '&to=' + encodeURIComponent(to.value);
+		return cfg.catalogUrl + sep + 'date=' + encodeURIComponent(from.value) + '&time=' + encodeURIComponent(to.value);
 	}
 
 	function syncLinks() {
 		var url = catalogUrl();
 		cta.href = url;
-		ctaDates.textContent = from.value && to.value ? ' на ' + fmt(from.value) + '–' + fmt(to.value) : '';
+		ctaDates.textContent = from.value && to.value ? ' на ' + fmt(from.value) + ', ' + to.value : '';
 		root.querySelectorAll('[data-grl-color-link], [data-grl-cta-plain]').forEach(function (a) { a.href = url; });
 	}
 
@@ -52,11 +51,11 @@
 			var has = Object.keys(matrix[color]).some(function (size) { return !!matrix[color][size]; });
 			var num = root.querySelector('[data-grl-count="' + color + '"]');
 			if (num) {
-				num.textContent = has ? ' — есть' : ' — нет на эти даты';
+				num.textContent = has ? ' — есть' : ' — нет на это время';
 				num.closest('li').classList.toggle('is-out', !has);
 			}
 			var edge = root.querySelector('[data-grl-frame-free="' + color + '"]');
-			if (edge) edge.textContent = has ? 'в наличии' : 'нет на эти даты';
+			if (edge) edge.textContent = has ? 'в наличии' : 'нет на это время';
 		});
 		hint.hidden = true;
 		counts.hidden = false;
@@ -74,11 +73,6 @@
 			showHint(defaultHint);
 			return;
 		}
-		if (to.value < from.value) {
-			to.setAttribute('aria-invalid', 'true');
-			showHint('День возврата не может быть раньше дня получения.', true);
-			return;
-		}
 
 		var id = ++requestId;
 		showHint('Проверяем склад…');
@@ -86,8 +80,8 @@
 		var body = new FormData();
 		body.append('action', 'gr_quote');
 		body.append('nonce', cfg.nonce);
-		body.append('date_from', from.value);
-		body.append('date_to', to.value);
+		body.append('date', from.value);
+		body.append('time', to.value);
 
 		fetch(cfg.ajaxUrl, { method: 'POST', body: body, credentials: 'same-origin' })
 			.then(function (r) { return r.json(); })
@@ -103,11 +97,7 @@
 			;
 	}
 
-	from.addEventListener('change', function () {
-		to.min = from.value || cfg.today;
-		if (to.value && from.value && to.value < from.value) to.value = from.value;
-		check();
-	});
+	from.addEventListener('change', check);
 	to.addEventListener('change', check);
 
 	form.addEventListener('submit', function (e) {

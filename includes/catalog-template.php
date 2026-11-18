@@ -18,6 +18,40 @@ function gr_catalog_photo( $color ) {
 	return file_exists( GR_PATH . $file ) ? GR_URL . $file : '';
 }
 
+/** Все фото цвета для листания в каталоге: public/catalog/red-01.webp, red-02.webp … */
+function gr_catalog_photos( $color ) {
+	$files = glob( GR_PATH . 'public/catalog/' . $color . '-*.webp' ) ?: array();
+	sort( $files );
+	$urls = array_map( function ( $f ) { return GR_URL . 'public/catalog/' . basename( $f ); }, $files );
+	if ( ! $urls && gr_catalog_photo( $color ) ) {
+		$urls[] = gr_catalog_photo( $color );
+	}
+	return $urls;
+}
+
+/** Лесенка цен: «1–2 шт. — 5 000 ₸ …», от 20 — одна бесплатно. Используется в каталоге, на главной и в условиях. */
+function gr_price_ladder_html() {
+	$tiers = gr_price_tiers();
+	$froms = array_keys( $tiers );
+	ob_start();
+	?>
+	<div class="gr-ladder">
+		<p class="gr-ladder-title">Чем больше мантий — тем дешевле каждая</p>
+		<ol class="gr-ladder-steps">
+			<?php foreach ( $froms as $i => $from ) : ?>
+				<?php $to = isset( $froms[ $i + 1 ] ) ? $froms[ $i + 1 ] - 1 : 0; ?>
+				<li data-from="<?php echo (int) $from; ?>" data-to="<?php echo (int) $to; ?>">
+					<span class="gr-ladder-qty"><?php echo esc_html( $to ? ( $from === $to ? $from : $from . '–' . $to ) . ' шт.' : 'от ' . $from . ' шт.' ); ?></span>
+					<span class="gr-ladder-price"><?php echo esc_html( gr_money( $tiers[ $from ] ) ); ?></span>
+				</li>
+			<?php endforeach; ?>
+		</ol>
+		<p class="gr-ladder-gift">От <?php echo (int) gr_free_gown_from(); ?> мантий — одна для организатора бесплатно</p>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+
 /** Иконка-галочка (SVG вместо символа). */
 function gr_check_icon() {
 	return '<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -29,8 +63,7 @@ function gr_catalog_shortcode() {
 
 	$hex   = gr_color_hex();
 	$today = current_time( 'Y-m-d' );
-	$price = gr_money( gr_price_per_day() );
-	$fee   = gr_money( gr_delivery_fee() );
+	$from  = gr_money( min( gr_price_tiers() ) );
 	$free  = (int) gr_free_delivery_from();
 
 	ob_start();
@@ -47,49 +80,63 @@ function gr_catalog_shortcode() {
 
 				<!-- 1. Даты -->
 				<section class="grc-step" aria-labelledby="grc-step-dates">
-					<h2 id="grc-step-dates" class="grc-h2"><span class="grc-num">1</span>Даты аренды</h2>
+					<h2 id="grc-step-dates" class="grc-h2"><span class="grc-num">1</span>Дата и время</h2>
 					<div class="grc-slate">
 						<div class="grc-slate-fields">
 							<label class="grc-field">
-								<span>Получаю</span>
-								<input type="date" name="date_from" min="<?php echo esc_attr( $today ); ?>" required>
+								<span>Дата</span>
+								<input type="date" name="date" min="<?php echo esc_attr( $today ); ?>" required>
 							</label>
 							<label class="grc-field">
-								<span>Возвращаю</span>
-								<input type="date" name="date_to" min="<?php echo esc_attr( $today ); ?>" required>
+								<span>Начало аренды</span>
+								<select name="time" required>
+									<option value="">Время</option>
+									<?php foreach ( gr_start_times() as $t ) : ?>
+										<option value="<?php echo esc_attr( $t ); ?>"><?php echo esc_html( $t . ' – ' . gr_end_time( $t ) ); ?></option>
+									<?php endforeach; ?>
+								</select>
 							</label>
 						</div>
-						<p class="grc-note">День возврата тоже считается днём аренды.</p>
+						<p class="grc-note">Аренда в Шымкенте — <?php echo (int) gr_rental_hours(); ?> часа, начало с 11:00 до 14:00. Другой город? <a href="<?php echo esc_url( gr_whatsapp_url() ); ?>" target="_blank" rel="noopener">Напишите в WhatsApp</a> — аренда на сутки с учётом дороги.</p>
 					</div>
 				</section>
 
 				<!-- 2. Мантии -->
 				<section class="grc-step" aria-labelledby="grc-step-gowns">
 					<h2 id="grc-step-gowns" class="grc-h2"><span class="grc-num">2</span>Цвета и размеры</h2>
-					<p class="grc-note">Нажмите на кадр, чтобы выбрать цвет, затем на размер и укажите количество. Можно выбрать несколько цветов и размеров.</p>
+					<p class="grc-note">Листайте фото, нажмите «Выбрать» под нужным цветом, затем размер и количество. Можно выбрать несколько цветов и размеров.</p>
 
 					<div class="gr-cards grc-frames">
 						<?php
 						$n = 2;
 						foreach ( gr_colors() as $color => $color_label ) :
-							$photo   = gr_catalog_photo( $color );
+							$photos  = gr_catalog_photos( $color );
 							$offered = gr_color_sizes( $color );
 							$missing = array_diff_key( gr_sizes(), $offered );
 							?>
 							<div class="gr-card grc-frame" data-color="<?php echo esc_attr( $color ); ?>" style="--swatch: <?php echo esc_attr( $hex[ $color ] ); ?>">
-								<button type="button" class="gr-color-btn grc-frame-btn" aria-pressed="false">
-									<span class="grc-photo">
-										<?php if ( $photo ) : ?>
-											<img src="<?php echo esc_url( $photo ); ?>" alt="<?php echo esc_attr( 'Мантия бакалавра, цвет: ' . mb_strtolower( $color_label ) ); ?>" loading="lazy">
+								<div class="grc-photo">
+									<div class="grc-gallery" tabindex="0" aria-label="<?php echo esc_attr( 'Фото: ' . $color_label ); ?>">
+										<?php if ( $photos ) : ?>
+											<?php foreach ( $photos as $i => $url ) : ?>
+												<img src="<?php echo esc_url( $url ); ?>" alt="<?php echo esc_attr( 'Мантия, цвет: ' . mb_strtolower( $color_label ) . ', фото ' . ( $i + 1 ) ); ?>" loading="lazy" width="900" height="1200">
+											<?php endforeach; ?>
 										<?php else : ?>
 											<?php echo gr_gown_placeholder_svg( $hex[ $color ] ); // phpcs:ignore -- безопасный SVG из нашего кода ?>
 										<?php endif; ?>
-										<span class="grc-tag"><?php echo esc_html( $price ); ?><small>/ сутки</small></span>
-										<span class="grc-corner grc-corner-tl" aria-hidden="true"></span>
-										<span class="grc-corner grc-corner-tr" aria-hidden="true"></span>
-										<span class="grc-corner grc-corner-bl" aria-hidden="true"></span>
-										<span class="grc-corner grc-corner-br" aria-hidden="true"></span>
-									</span>
+									</div>
+									<?php if ( count( $photos ) > 1 ) : ?>
+										<button type="button" class="grc-nav grc-nav-prev" aria-label="Предыдущее фото"><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+										<button type="button" class="grc-nav grc-nav-next" aria-label="Следующее фото"><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+										<span class="grc-count" aria-hidden="true">1 / <?php echo count( $photos ); ?></span>
+									<?php endif; ?>
+									<span class="grc-tag">от <?php echo esc_html( $from ); ?></span>
+									<span class="grc-corner grc-corner-tl" aria-hidden="true"></span>
+									<span class="grc-corner grc-corner-tr" aria-hidden="true"></span>
+									<span class="grc-corner grc-corner-bl" aria-hidden="true"></span>
+									<span class="grc-corner grc-corner-br" aria-hidden="true"></span>
+								</div>
+								<button type="button" class="gr-color-btn grc-frame-btn" aria-pressed="false">
 									<span class="grc-edge">
 										<span class="grc-edge-num"><?php echo esc_html( sprintf( '%02dA', $n ) ); ?></span>
 										<span class="grc-edge-name"><?php echo esc_html( $color_label ); ?></span>
@@ -138,7 +185,7 @@ function gr_catalog_shortcode() {
 								<input type="radio" name="delivery" value="0" checked>
 								<span class="grc-radio-dot" aria-hidden="true"></span>
 								<span class="grc-radio-title">Самовывоз</span>
-								<span class="grc-radio-price">бесплатно</span>
+								<span class="grc-radio-price">Шымкент</span>
 							</label>
 							<div class="grc-option-fields" data-show="self">
 								<p class="grc-place">
@@ -152,23 +199,19 @@ function gr_catalog_shortcode() {
 									Открыть в 2ГИС
 									<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16"><path d="M7 17L17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
 								</a>
-								<p class="grc-note">Мантии вернуть в последний день брони по этому же адресу.</p>
+								<p class="grc-note"><strong>Залог:</strong> оригинал удостоверения личности. Если его нет — фото удостоверения и 10 000 ₸, вернём при возврате мантий.</p>
 							</div>
 						</div>
 
 						<div class="grc-option">
 							<label class="grc-radio">
-								<input type="radio" name="delivery" value="1">
+								<input type="radio" name="delivery" value="1" disabled>
 								<span class="grc-radio-dot" aria-hidden="true"></span>
 								<span class="grc-radio-title">Доставка</span>
-								<span class="grc-radio-price gr-fee" data-fee="delivery"><?php echo esc_html( $fee ); ?></span>
+								<span class="grc-radio-price">от <?php echo (int) $free; ?> мантий, бесплатно</span>
 							</label>
 							<div class="grc-option-fields" data-show="delivery" hidden>
-								<p class="grc-note">Привезём мантии и сами заберём их после праздника. Бесплатно от <?php echo esc_html( $free ); ?> мантий.</p>
-								<label class="grc-field grc-field-small">
-									<span>Время доставки * <span class="gr-date-hint" data-date="from"></span></span>
-									<input type="time" name="delivery_time">
-								</label>
+								<p class="grc-note">Привезём к началу аренды и сами заберём после.</p>
 								<label class="grc-field gr-address">
 									<span>Адрес *</span>
 									<input type="text" name="address" autocomplete="street-address" placeholder="Город, улица, дом, квартира или учебное заведение">
@@ -209,9 +252,10 @@ function gr_catalog_shortcode() {
 
 			<!-- Квитанция заказа (на компьютере прилипает справа) -->
 			<aside class="grc-aside">
+				<?php echo gr_price_ladder_html(); // phpcs:ignore -- разметка из нашей функции ?>
 				<div class="gr-summary grc-receipt" aria-live="polite">
 					<h2 class="grc-receipt-title">Ваш заказ</h2>
-					<div class="gr-summary-body"><p class="gr-muted">Выберите даты и мантии.</p></div>
+					<div class="gr-summary-body"><p class="gr-muted">Выберите дату, время и мантии.</p></div>
 				</div>
 				<div class="gr-errors" role="alert"></div>
 				<label class="grc-consent">
@@ -224,8 +268,8 @@ function gr_catalog_shortcode() {
 		</form>
 
 		<div class="gr-success grc-success" hidden>
-			<h2>Заявка отправлена</h2>
-			<p class="gr-success-text"></p>
+			<h2>Бронь принята</h2>
+			<div class="gr-success-text"></div>
 			<button type="button" class="gr-again">Оформить ещё одну</button>
 		</div>
 	</div>

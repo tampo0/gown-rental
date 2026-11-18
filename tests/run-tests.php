@@ -7,7 +7,7 @@
  *
  * Тесты работают с настоящей базой сайта, но:
  *  - берут даты в 2030 году, где нет реальных броней;
- *  - на время теста ставят известный остаток на складе для «красный, длинный»;
+ *  - на время теста ставят известный остаток на складе для «бордовый, стандарт»;
  *  - в конце удаляют всё, что создали, и возвращают склад как было.
  */
 
@@ -96,32 +96,34 @@ function call_ajax( $callback, $post ) {
 
 $GLOBALS['gr_created'] = array();
 $color                 = 'red';
-$size                  = 'long';
+$size                  = 'standard';
 $stock_before          = gr_get_stock( $color, $size );
 gr_set_stock( $color, $size, 3 );
 
-$item = function ( $qty, $c = 'red', $s = 'long' ) {
+$item = function ( $qty, $c = 'red', $s = 'standard' ) {
 	return array( array( 'color' => $c, 'size' => $s, 'quantity' => $qty ) );
 };
 
 try {
 
-	section( '1. Расчёты' );
-	check( 'Дни считаются включительно (1–3 марта = 3 дня)', 3 === gr_count_days( '2030-03-01', '2030-03-03' ) );
-	check( 'Один день (1–1 марта = 1 день)', 1 === gr_count_days( '2030-03-01', '2030-03-01' ) );
+	section( '1. Цены' );
+	$expect = array( 1 => 5000, 2 => 5000, 3 => 3000, 4 => 3000, 5 => 2500, 9 => 2500, 10 => 2000, 19 => 2000, 20 => 2000 );
+	$ok     = true;
+	foreach ( $expect as $q => $price ) {
+		$ok = $ok && gr_unit_price( $q ) === $price;
+	}
+	check( 'Цена за мантию по ступеням: 1–2 → 5000, 3–4 → 3000, 5–9 → 2500, от 10 → 2000', $ok );
 
-	$t = gr_calc_totals( $item( 2 ), '2030-03-01', '2030-03-03', true, true );
-	check( 'Аренда = мантии × дни × цена', $t['rental'] === 2 * 3 * gr_price_per_day(), 'получили ' . $t['rental'] );
-	check( 'Доставка платная, если мантий меньше порога', $t['delivery_fee'] === gr_delivery_fee() );
-	check( 'Забрать мантии входит в доставку (0 ₸)', 0 === $t['pickup_fee'] );
+	$t = gr_calc_totals( $item( 4 ) );
+	check( '4 мантии = 4 × 3 000 = 12 000 ₸', 12000 === $t['total'], 'получили ' . $t['total'] );
+	$t = gr_calc_totals( $item( 19 ) );
+	check( '19 мантий — без бесплатной: 38 000 ₸', 38000 === $t['total'] && 0 === $t['free_gowns'] );
+	$t = gr_calc_totals( $item( 20 ) );
+	check( 'От 20 мантий одна бесплатно: 20 шт. = 19 × 2 000 = 38 000 ₸', 38000 === $t['total'] && 1 === $t['free_gowns'] );
+	check( 'Доставка всегда 0 ₸', 0 === $t['delivery_fee'] && 0 === $t['pickup_fee'] );
+	check( 'Аренда 3 часа: 11:30 → 14:30', '14:30' === gr_end_time( '11:30' ) );
 
-	$n = gr_free_delivery_from();
-	$t = gr_calc_totals( $item( $n ), '2030-03-01', '2030-03-01', true, true );
-	check( "Доставка бесплатна ровно от {$n} мантий", 0 === $t['delivery_fee'] && $t['free_delivery'] );
-	$t = gr_calc_totals( $item( $n - 1 ), '2030-03-01', '2030-03-01', true, false );
-	check( 'При ' . ( $n - 1 ) . ' мантиях доставка платная', $t['delivery_fee'] > 0 );
-
-	section( '2. Наличие по датам (на складе 3 шт. «красный, длинный»)' );
+	section( '2. Наличие по дням — другие города (на складе 3 шт.)' );
 	check( 'Пока броней нет — свободно 3', 3 === gr_get_available( $color, $size, '2030-03-01', '2030-03-05' ) );
 
 	$a = make_booking( array( 'date_from' => '2030-03-01', 'date_to' => '2030-03-03', 'items' => $item( 2 ) ) );
@@ -151,6 +153,24 @@ try {
 		$a
 	);
 	check( 'Редактирование A не считает саму A занятой', ! is_wp_error( $a_again ), errors_of( $a_again ) );
+
+	section( '2б. Аренда на 3 часа (20 марта, на складе 3 шт.)' );
+	$h1 = make_booking( array( 'date_from' => '2030-03-20', 'time_from' => '11:00', 'items' => $item( 2 ) ) );
+	check( 'Бронь 11:00–14:00 на 2 шт. принята', ! is_wp_error( $h1 ), errors_of( $h1 ) );
+	check( 'В 12:30 (пересекается) свободна 1 шт.', 1 === gr_get_available( $color, $size, '2030-03-20', '2030-03-20', 0, '12:30' ) );
+	check( 'С 14:00 мантии снова свободны — 3 шт.', 3 === gr_get_available( $color, $size, '2030-03-20', '2030-03-20', 0, '14:00' ) );
+
+	$h2 = make_booking( array( 'date_from' => '2030-03-20', 'time_from' => '13:30', 'items' => $item( 2 ) ) );
+	check( 'Бронь 13:30 на 2 шт. отклонена (в 13:30–14:00 было бы 4 > 3)', is_wp_error( $h2 ) );
+
+	$h3 = make_booking( array( 'date_from' => '2030-03-20', 'time_from' => '14:00', 'items' => $item( 3 ) ) );
+	check( 'Бронь 14:00 на все 3 шт. принята — сразу после первой', ! is_wp_error( $h3 ), errors_of( $h3 ) );
+
+	$day = make_booking( array( 'date_from' => '2030-03-20', 'date_to' => '2030-03-20', 'items' => $item( 1 ) ) );
+	check( 'Бронь на весь день (другой город) отклонена: в 14:00 было бы 4', is_wp_error( $day ) );
+
+	$saved = gr_get_booking( $h1 );
+	check( 'У брони со временем дата возврата = дата получения', $saved && $saved->date_to === $saved->date_from && '11:00' === $saved->time_from );
 
 	section( '3. Статусы' );
 	$r = gr_set_booking_status( $a, 'cancelled' );
@@ -189,11 +209,11 @@ try {
 	$r = make_booking( array( 'date_from' => '2030-03-10', 'date_to' => '2030-03-09', 'items' => $item( 1 ) ) );
 	check( 'Дата возврата раньше получения — ошибка', is_wp_error( $r ) );
 
-	$r = make_booking( array( 'date_from' => '2030-03-10', 'date_to' => '2030-03-10', 'items' => $item( 1 ), 'delivery' => 1, 'delivery_time' => '10:00' ) );
-	check( 'Доставка без адреса — ошибка', is_wp_error( $r ) );
-
 	$r = make_booking( array( 'date_from' => '2030-03-10', 'date_to' => '2030-03-10', 'items' => $item( 1 ), 'delivery' => 1, 'address' => 'ул. Тестовая 1' ) );
-	check( 'Доставка без времени — ошибка', is_wp_error( $r ) );
+	check( 'Доставка меньше чем на 100 мантий — ошибка', is_wp_error( $r ) && false !== strpos( errors_of( $r ), '100' ) );
+
+	$r = make_booking( array( 'date_from' => '2030-03-10', 'time_from' => '25:99', 'items' => $item( 1 ) ) );
+	check( 'Неверное время начала — ошибка', is_wp_error( $r ) );
 
 	$r = make_booking( array( 'date_from' => '2030-03-10', 'date_to' => '2030-03-10', 'items' => $item( 1 ), 'phone' => '123' ) );
 	check( 'Короткий телефон — ошибка', is_wp_error( $r ) );
@@ -206,21 +226,24 @@ try {
 		'gr_ajax_quote',
 		array(
 			'nonce'     => wp_create_nonce( 'gr_public' ),
-			'date_from' => '2030-03-03',
-			'date_to'   => '2030-03-03',
+			'date'      => '2030-03-03',
+			'time'      => '12:00',
 			'items'     => wp_json_encode( $item( 99 ) ),
 		)
 	);
-	$val = $res['data']['matrix']['red']['long'] ?? null;
+	$val = $res['data']['matrix']['red']['standard'] ?? null;
 	check( 'В ответе только да/нет, без чисел', is_bool( $val ), 'получили ' . var_export( $val, true ) );
-	check( 'Нехватка помечена как «short» без количества', in_array( 'red|long', $res['data']['short'] ?? array(), true ) );
+	check( 'Нехватка помечена как «short» без количества', in_array( 'red|standard', $res['data']['short'] ?? array(), true ) );
 	check( 'У фиолетового нет детского размера в ответе', ! isset( $res['data']['matrix']['purple']['kids'] ) );
+	check( '«Великан» только у бордового и изумруда', isset( $res['data']['matrix']['red']['giant'], $res['data']['matrix']['green']['giant'] ) && ! isset( $res['data']['matrix']['blue']['giant'] ) );
+	$res = call_ajax( 'gr_ajax_quote', array( 'nonce' => wp_create_nonce( 'gr_public' ), 'date' => '2030-03-03', 'time' => '15:00', 'items' => '[]' ) );
+	check( 'Начало позже 14:00 сайт не принимает', isset( $res['success'] ) && false === $res['success'] );
 
 	section( '5б. Согласие на обработку персональных данных' );
 	$form = array(
 		'nonce'         => wp_create_nonce( 'gr_public' ),
-		'date_from'     => '2030-04-01',
-		'date_to'       => '2030-04-01',
+		'date'          => '2030-04-01',
+		'time'          => '11:00',
 		'customer_name' => 'Автотест',
 		'phone'         => '+7 700 000 00 00',
 		'delivery'      => '0',
@@ -233,6 +256,14 @@ try {
 	if ( ! empty( $res['data']['id'] ) ) {
 		$GLOBALS['gr_created'][] = (int) $res['data']['id'];
 	}
+
+	section( '5в. Почта для заявок' );
+	$mail = new class() { public function name() { return 'mail'; } };
+	$mc   = apply_filters( 'wpcf7_mail_components', array( 'recipient' => 'old@example.com' ), null, $mail );
+	check( 'Письмо формы «Напишите нам» уходит на email из настроек', gr_contact_email() === $mc['recipient'] );
+	$auto = new class() { public function name() { return 'mail_2'; } };
+	$mc   = apply_filters( 'wpcf7_mail_components', array( 'recipient' => 'client@example.com' ), null, $auto );
+	check( 'Автоответ клиенту не перенаправляется', 'client@example.com' === $mc['recipient'] );
 
 	section( '6. Смена статуса из списка броней (AJAX админки)' );
 	wp_set_current_user( 0 );

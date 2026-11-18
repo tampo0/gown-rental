@@ -2,12 +2,12 @@
  * Каталог мантий с бронированием.
  *
  * Как это работает:
- * 1. Клиент выбирает даты → спрашиваем сервер, какие цвета и размеры есть в наличии
- *    (количество свободных мантий клиенту не показываем — только «есть / нет»).
- * 2. Клик по цвету открывает размеры, клик по размеру — поле количества.
- *    Можно выбрать сколько угодно цветов и размеров.
- * 3. Стоимость (аренда + доставка) пересчитывается сразу. Доставка — туда и обратно.
- * 4. Отправляем заявку; сервер перепроверяет всё ещё раз.
+ * 1. Клиент выбирает дату и время начала (аренда 3 часа) → спрашиваем сервер, какие цвета
+ *    и размеры есть в наличии (количество свободных мантий клиенту не показываем — только «есть / нет»).
+ * 2. «Выбрать» под цветом открывает размеры, клик по размеру — поле количества.
+ * 3. Цена за мантию зависит от количества во всей брони (лесенка цен), от 20 — одна бесплатно.
+ *    Доставка — бесплатно и только от 100 мантий.
+ * 4. Отправляем заявку; сервер перепроверяет всё ещё раз и возвращает данные для квитанции.
  */
 (function () {
 	'use strict';
@@ -17,16 +17,23 @@
 
 	// wp_localize_script передаёт числа строками — приводим к числам,
 	// иначе «27000 + 2000» превратится в строку «270002000».
-	cfg.pricePerDay = Number(cfg.pricePerDay);
-	cfg.deliveryFee = Number(cfg.deliveryFee);
 	cfg.freeFrom = Number(cfg.freeFrom);
+	cfg.freeGownFrom = Number(cfg.freeGownFrom);
+	var tiers = Object.keys(cfg.tiers).map(function (k) { return [Number(k), Number(cfg.tiers[k])]; })
+		.sort(function (a, b) { return a[0] - b[0]; });
+
+	function unitPrice(qty) {
+		var price = 0;
+		tiers.forEach(function (t) { if (qty >= t[0]) price = t[1]; });
+		return price;
+	}
 
 	document.querySelectorAll('.gr-catalog').forEach(initCatalog);
 
 	function initCatalog(root) {
 		var form = root.querySelector('.gr-form');
-		var dateFrom = form.elements.date_from;
-		var dateTo = form.elements.date_to;
+		var dateEl = form.elements.date;
+		var timeEl = form.elements.time;
 		var submit = root.querySelector('.gr-submit');
 		var summary = root.querySelector('.gr-summary-body');
 		var errorsBox = root.querySelector('.gr-errors');
@@ -38,6 +45,25 @@
 		var requoteTimer = 0;
 		var dateError = '';
 		var requestId = 0;
+
+		/* ---------- Листание фото ---------- */
+		root.querySelectorAll('.grc-photo').forEach(function (box) {
+			var gallery = box.querySelector('.grc-gallery');
+			var count = box.querySelector('.grc-count');
+			var total = gallery.querySelectorAll('img').length;
+			function go(dir) { gallery.scrollBy({ left: dir * gallery.clientWidth, behavior: 'smooth' }); }
+			var prev = box.querySelector('.grc-nav-prev');
+			var next = box.querySelector('.grc-nav-next');
+			if (prev) prev.addEventListener('click', function () { go(-1); });
+			if (next) next.addEventListener('click', function () { go(1); });
+			gallery.addEventListener('keydown', function (e) {
+				if (e.key === 'ArrowLeft') go(-1);
+				if (e.key === 'ArrowRight') go(1);
+			});
+			if (count) gallery.addEventListener('scroll', function () {
+				count.textContent = (Math.round(gallery.scrollLeft / gallery.clientWidth) + 1) + ' / ' + total;
+			}, { passive: true });
+		});
 
 		/* ---------- Выбор цвета ---------- */
 		root.querySelectorAll('.gr-card').forEach(function (card) {
@@ -107,38 +133,26 @@
 			update();
 		}
 
-		/* ---------- Даты ---------- */
-		[dateFrom, dateTo].forEach(function (el) {
-			el.addEventListener('change', function () {
-				if (el === dateFrom) {
-					dateTo.min = dateFrom.value || cfg.today;
-					if (dateTo.value && dateTo.value < dateFrom.value) dateTo.value = dateFrom.value;
-				}
-				loadAvailability();
-			});
-		});
+		/* ---------- Дата и время ---------- */
+		[dateEl, timeEl].forEach(function (el) { el.addEventListener('change', function () { loadAvailability(); }); });
 
-		// Даты из ссылки с главной: /каталог/?from=2026-05-20&to=2026-05-22
+		// Дата и время из ссылки с главной: /каталог/?date=2026-05-20&time=11:00
 		(function prefillFromUrl() {
 			var params = new URLSearchParams(window.location.search);
-			var re = /^\d{4}-\d{2}-\d{2}$/;
-			var f = params.get('from'), t = params.get('to');
-			if (f && t && re.test(f) && re.test(t) && f >= cfg.today && t >= f) {
-				dateFrom.value = f;
-				dateTo.min = f;
-				dateTo.value = t;
-				setTimeout(loadAvailability, 0);
-			}
+			var d = params.get('date') || params.get('from'), t = params.get('time');
+			if (d && /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= cfg.today) dateEl.value = d;
+			if (t && timeEl.querySelector('option[value="' + t + '"]')) timeEl.value = t;
+			if (dateEl.value && timeEl.value) setTimeout(loadAvailability, 0);
 		})();
 
 		function loadAvailability(quiet) {
 			if (!quiet) { matrix = null; short = {}; }
 			dateError = '';
-			if (!dateFrom.value || !dateTo.value) { matrix = null; update(); return; }
+			if (!dateEl.value || !timeEl.value) { matrix = null; update(); return; }
 
 			var id = ++requestId;
 			if (!quiet) summary.innerHTML = '<p class="gr-muted">Проверяем наличие…</p>';
-			post('gr_quote', { date_from: dateFrom.value, date_to: dateTo.value, items: JSON.stringify(itemList()) })
+			post('gr_quote', { date: dateEl.value, time: timeEl.value, items: JSON.stringify(itemList()) })
 				.then(function (res) {
 					if (id !== requestId) return; // устаревший ответ
 					if (res.success) {
@@ -173,10 +187,18 @@
 		function update() {
 			var list = itemList();
 			var qty = list.reduce(function (s, i) { return s + i.quantity; }, 0);
-			var days = dayCount();
+			var deliveryRadio = form.querySelector('[name="delivery"][value="1"]');
+			deliveryRadio.disabled = qty < cfg.freeFrom;
+			if (deliveryRadio.disabled && deliveryRadio.checked) form.querySelector('[name="delivery"][value="0"]').checked = true;
 			var delivery = form.elements.delivery.value === '1';
-			var free = qty >= cfg.freeFrom;
-			var fee = free ? 0 : cfg.deliveryFee;
+			var unit = unitPrice(qty);
+			var freeGowns = qty >= cfg.freeGownFrom ? 1 : 0;
+
+			// Лесенка цен: подсветить текущую ступень.
+			root.querySelectorAll('.gr-ladder-steps li').forEach(function (li) {
+				var from = Number(li.dataset.from), to = Number(li.dataset.to);
+				li.classList.toggle('is-current', qty >= from && (!to || qty <= to));
+			});
 
 			// Свободно / нет — у каждого размера.
 			var allEnough = true;
@@ -199,12 +221,7 @@
 			// Самовывоз / доставка: что показать, что обязательно, цена.
 			root.querySelector('[data-show="self"]').hidden = delivery;
 			root.querySelector('[data-show="delivery"]').hidden = !delivery;
-			form.elements.delivery_time.required = delivery;
 			form.elements.address.required = delivery;
-			root.querySelectorAll('.gr-fee').forEach(function (el) {
-				el.textContent = free ? 'бесплатно' : money(cfg.deliveryFee);
-			});
-			root.querySelector('[data-date="from"]').textContent = dateFrom.value ? '— ' + fmtDate(dateFrom.value) : '— в день получения';
 
 			// Итог заказа.
 			var html = '';
@@ -217,30 +234,35 @@
 					var k = i.color + '|' + i.size;
 					var notThere = matrix && (!matrix[i.color][i.size] || short[k]);
 					html += '<li><span>' + esc(cfg.colors[i.color] + ', ' + cfg.sizes[i.size].toLowerCase() + ' × ' + i.quantity) + '</span>'
-						+ (days ? '<span>' + money(days * cfg.pricePerDay * i.quantity) + '</span>' : '')
-						+ (notThere ? '<em class="gr-error-text">столько нет на эти даты — уменьшите количество</em>' : '')
+						+ '<span>' + money(unit * i.quantity) + '</span>'
+						+ (notThere ? '<em class="gr-error-text">столько нет на это время — уменьшите количество</em>' : '')
 						+ '</li>';
 				});
 				html += '</ul>';
 
-				if (days) {
-					var rental = days * cfg.pricePerDay * qty;
-					var total = rental + (delivery ? fee : 0);
-					html += '<dl class="gr-totals">'
-						+ row('Аренда: ' + qty + ' ' + plural(qty, 'мантия', 'мантии', 'мантий') + ' × ' + days + ' ' + plural(days, 'день', 'дня', 'дней'), money(rental))
-						+ row(delivery ? 'Доставка и забор' : 'Самовывоз', delivery && fee ? money(fee) : 'бесплатно')
-						+ row('<strong>Итого</strong>', '<strong>' + money(total) + '</strong>')
-						+ '</dl>';
-					if (!free && delivery) {
-						html += '<p class="gr-muted">Закажите от ' + cfg.freeFrom + ' мантий — доставка будет бесплатной.</p>';
-					}
-				} else if (!dateError) {
-					html += '<p class="gr-muted">Укажите даты, чтобы посчитать стоимость.</p>';
+				html += '<dl class="gr-totals">'
+					+ row(qty + ' ' + plural(qty, 'мантия', 'мантии', 'мантий') + ' × ' + money(unit), money(unit * qty))
+					+ (freeGowns ? row('Одна для организатора', '−' + money(unit)) : '')
+					+ row(delivery ? 'Доставка' : 'Самовывоз', 'бесплатно')
+					+ row('<strong>Итого</strong>', '<strong>' + money(unit * (qty - freeGowns)) + '</strong>')
+					+ '</dl>';
+
+				// Подсказка: сколько добавить до следующей ступени цены.
+				var next = tiers.filter(function (t) { return t[0] > qty; })[0];
+				if (next) {
+					var add = next[0] - qty;
+					html += '<p class="gr-nudge">Ещё ' + add + ' ' + plural(add, 'мантия', 'мантии', 'мантий') + ' — и каждая будет по ' + money(next[1]) + '</p>';
+				} else if (!freeGowns) {
+					var addG = cfg.freeGownFrom - qty;
+					html += '<p class="gr-nudge">Ещё ' + addG + ' ' + plural(addG, 'мантия', 'мантии', 'мантий') + ' — и одна для организатора бесплатно</p>';
+				}
+				if (!dateEl.value || !timeEl.value) {
+					html += '<p class="gr-muted">Выберите дату и время, чтобы проверить наличие.</p>';
 				}
 			}
 			summary.innerHTML = html;
 
-			submit.disabled = !(list.length && matrix && allEnough);
+			submit.disabled = !(list.length && matrix && allEnough && unit);
 		}
 
 		function row(label, value) {
@@ -252,11 +274,6 @@
 				var p = k.split('|');
 				return { color: p[0], size: p[1], quantity: items[k] };
 			});
-		}
-
-		function dayCount() {
-			if (!dateFrom.value || !dateTo.value || dateTo.value < dateFrom.value) return 0;
-			return Math.round((Date.parse(dateTo.value) - Date.parse(dateFrom.value)) / 86400000) + 1;
 		}
 
 		/* ---------- Отправка ---------- */
@@ -274,7 +291,7 @@
 
 			post('gr_submit_booking', data).then(function (res) {
 				if (res.success) {
-					root.querySelector('.gr-success-text').textContent = res.data.message;
+					root.querySelector('.gr-success-text').innerHTML = receipt(res.data);
 					form.hidden = true;
 					success.hidden = false;
 					success.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -306,6 +323,20 @@
 			update();
 		});
 
+		function receipt(d) {
+			if (!d.id) return '<p>' + esc(d.message || 'Спасибо!') + '</p>';
+			return '<p class="gr-success-num">Бронь № ' + d.id + '</p>'
+				+ '<dl class="gr-success-list">'
+				+ '<div><dt>Когда</dt><dd>' + esc(d.date) + '<br>' + esc(d.time) + '</dd></div>'
+				+ '<div><dt>Мантии</dt><dd>' + d.items.map(function (i) { return esc(i.color + ', ' + i.size.toLowerCase() + ' — ' + i.quantity + ' шт.'); }).join('<br>') + '</dd></div>'
+				+ '<div><dt>Цена</dt><dd>' + esc(d.quantity + ' × ' + d.unit_price) + (d.free_gowns ? '<br>одна для организатора бесплатно' : '') + '</dd></div>'
+				+ '<div><dt>' + (d.delivery ? 'Доставка' : 'Самовывоз') + '</dt><dd>' + esc(d.address) + '</dd></div>'
+				+ '<div class="gr-success-total"><dt>Итого</dt><dd>' + esc(d.total) + '</dd></div>'
+				+ '</dl>'
+				+ '<p class="gr-success-next">Мы напишем вам в WhatsApp на номер ' + esc(d.phone) + ', чтобы подтвердить бронь.'
+				+ (d.delivery ? '' : ' При получении возьмите удостоверение личности — это залог.') + '</p>';
+		}
+
 		function showErrors(list) {
 			errorsBox.innerHTML = '<ul>' + list.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul>';
 			errorsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -329,10 +360,6 @@
 		return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₸';
 	}
 
-	function fmtDate(iso) {
-		var p = iso.split('-');
-		return p[2] + '.' + p[1] + '.' + p[0];
-	}
 
 	/** 1 мантия, 2 мантии, 5 мантий. */
 	function plural(n, one, few, many) {

@@ -811,3 +811,93 @@
 .gr-landing-page .site-footer-wrap,
 .gr-landing-page .site-footer .site-footer-row-container-inner { background: #fafaf8; }
 .gr-landing-page .site-footer a { color: inherit; text-decoration: underline; text-decoration-color: #d6b25e; text-underline-offset: 3px; }
+
+/* ---------- v0.14: выбор времени ---------- */
+.grc .grc-slate .grc-field select {
+	width: 100%;
+	min-height: 52px;
+	padding: 0 12px;
+	border: 1.5px solid var(--line);
+	border-radius: 10px;
+	background: #fff;
+	color: var(--ink);
+	font: 500 1rem/1 var(--text);
+	font-variant-numeric: tabular-nums;
+}
+.grc .grc-slate .grc-field select:focus { outline: none; border-color: var(--ink); }
+.grc-slate .grc-note a { color: var(--ink); text-decoration-color: var(--gold); text-underline-offset: 3px; }
+
+/* ---------- Листаемые фото в кадре ---------- */
+.grc-gallery {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	scrollbar-width: none;
+}
+.grc-gallery::-webkit-scrollbar { display: none; }
+.grc-gallery:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.grc-gallery img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; object-position: top center; scroll-snap-align: start; }
+
+.grc .grc-nav {
+	position: absolute;
+	top: 50%;
+	z-index: 2;
+	display: grid;
+	place-items: center;
+	width: 34px;
+	height: 34px;
+	margin-top: -17px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.85);
+	color: var(--ink);
+	cursor: pointer;
+	box-shadow: 0 4px 12px -6px rgba(0, 0, 0, 0.5);
+	opacity: 0;
+	transition: opacity 0.2s var(--ease);
+}
+.grc-nav-prev { left: 8px; }
+.grc-nav-next { right: 8px; }
+.grc-photo:hover .grc-nav,
+.grc .grc-nav:focus-visible { opacity: 1; }
+@media (hover: none) { .grc .grc-nav { opacity: 1; } }
+
+.grc-count {
+	position: absolute;
+	left: 12px;
+	bottom: 12px;
+	z-index: 1;
+	padding: 3px 8px;
+	border-radius: 999px;
+	background: rgba(18, 19, 21, 0.7);
+	color: #fff;
+	font-size: 0.72rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.grc .gr-nudge {
+	margin: 10px 0 0 !important;
+	padding: 8px 10px;
+	border-radius: 2px;
+	background: #f6efdc;
+	color: #6b5216;
+	font-size: 0.86rem;
+	font-weight: 500;
+}
+
+/* Доставка недоступна до 100 мантий */
+.grc-radio:has(input:disabled) { cursor: not-allowed; opacity: 0.55; }
+
+/* ---------- Квитанция после брони ---------- */
+.grc-success .gr-success-text { text-align: left; }
+.grc .gr-success-num { margin: 0 0 14px; text-align: center; font-family: var(--display); font-weight: 700; font-size: 1.1rem; color: var(--gold-deep); }
+.grc dl.gr-success-list { margin: 0 0 18px; }
+.gr-success-list div { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.gr-success-list dt { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.gr-success-list dd { margin: 0; font-weight: 500; }
+.gr-success-list .gr-success-total { border-bottom: 0; border-top: 1.5px solid var(--ink); }
+.gr-success-total dd { font-family: var(--display); font-weight: 700; font-size: 1.2rem; }
+.grc .gr-success-next { margin-bottom: 20px !important; color: var(--ink-soft); }

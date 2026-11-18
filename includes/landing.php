@@ -47,7 +47,7 @@ function gr_landing_assets() {
 		array(),
 		null
 	);
-	wp_enqueue_style( 'gr-landing', GR_URL . 'public/landing.css', array( 'gr-landing-fonts' ), GR_VERSION );
+	wp_enqueue_style( 'gr-landing', GR_URL . 'public/landing.css', array( 'gr-landing-fonts', 'gr-ladder' ), GR_VERSION );
 	wp_enqueue_script( 'gr-landing', GR_URL . 'public/landing.js', array(), GR_VERSION, true );
 	wp_localize_script(
 		'gr-landing',
@@ -80,21 +80,16 @@ add_filter( 'body_class', 'gr_landing_body_class' );
  * ---------------------------------------------------------------------- */
 
 function gr_landing_shortcode() {
-	$price    = gr_money( gr_price_per_day() );
-	$delivery = gr_money( gr_delivery_fee() );
 	$free     = (int) gr_free_delivery_from();
 	$catalog  = gr_catalog_url();
 	$colors   = gr_colors();
 	$hex      = gr_color_hex();
 
-	// Кадры контактного листа: цвет → фото.
-	$frames = array(
-		'red'    => 'color-red',
-		'blue'   => 'color-blue',
-		'green'  => 'color-green',
-		'purple' => 'color-purple',
-		'black'  => 'color-black',
-	);
+	// Кадры контактного листа: первое фото каждого цвета из каталога.
+	$frames = array();
+	foreach ( array_keys( $colors ) as $key ) {
+		$frames[ $key ] = gr_catalog_photos( $key )[0] ?? '';
+	}
 
 	ob_start();
 	?>
@@ -111,17 +106,22 @@ function gr_landing_shortcode() {
 					<p class="grl-dates-title">Когда нужны мантии?</p>
 					<div class="grl-slate-fields">
 						<label class="grl-field">
-							<span>Получить</span>
-							<input type="date" name="from" required>
+							<span>Дата</span>
+							<input type="date" name="date" required>
 						</label>
 						<label class="grl-field">
-							<span>Вернуть</span>
-							<input type="date" name="to" required>
+							<span>Начало аренды</span>
+							<select name="time" required>
+								<option value="">Время</option>
+								<?php foreach ( gr_start_times() as $t ) : ?>
+									<option value="<?php echo esc_attr( $t ); ?>"><?php echo esc_html( $t . ' – ' . gr_end_time( $t ) ); ?></option>
+								<?php endforeach; ?>
+							</select>
 						</label>
 					</div>
 
 					<div class="grl-slate-result" aria-live="polite">
-						<p class="grl-slate-hint" data-grl-hint>Выберите обе даты — сразу покажем, какие цвета свободны.</p>
+						<p class="grl-slate-hint" data-grl-hint>Аренда — <?php echo (int) gr_rental_hours(); ?> часа, начало с 11:00 до 14:00. Выберите дату и время — покажем, какие цвета свободны.</p>
 						<ul class="grl-counts" data-grl-counts hidden>
 							<?php foreach ( $colors as $key => $label ) : ?>
 								<li style="--fabric: <?php echo esc_attr( $hex[ $key ] ); ?>">
@@ -140,7 +140,7 @@ function gr_landing_shortcode() {
 				</form>
 
 				<p class="grl-terms">
-					Доставка и вывоз — <?php echo esc_html( $delivery ); ?>
+					Самовывоз в Шымкенте · доставка бесплатно от <?php echo (int) $free; ?> мантий · другой город — <a href="<?php echo esc_url( gr_whatsapp_url() ); ?>" target="_blank" rel="noopener">пишите в WhatsApp</a>
 				</p>
 			</div>
 
@@ -154,14 +154,14 @@ function gr_landing_shortcode() {
 				<!-- Ценник-бирка на мантии -->
 				<p class="grl-pricetag">
 					<span class="grl-pricetag-hole" aria-hidden="true"></span>
-					<span class="grl-pricetag-sum"><?php echo esc_html( number_format( gr_price_per_day(), 0, '', ' ' ) ); ?><small>₸</small></span>
-					<span class="grl-pricetag-per">за мантию в сутки</span>
-					<span class="grl-pricetag-free">Доставка 0 ₸ от <?php echo esc_html( $free ); ?> мантий</span>
+					<span class="grl-pricetag-per">от</span>
+					<span class="grl-pricetag-sum"><?php echo esc_html( number_format( min( gr_price_tiers() ), 0, '', ' ' ) ); ?><small>₸</small></span>
+					<span class="grl-pricetag-per">за мантию · чем больше, тем дешевле</span>
 				</p>
 
 				<figcaption class="grl-caption">
 					<span>Кадр 01</span>
-					<span>Зелёная · Стандартный</span>
+					<span>Изумруд · Стандарт</span>
 				</figcaption>
 			</figure>
 		</section>
@@ -170,7 +170,7 @@ function gr_landing_shortcode() {
 		<section class="grl-sheet" aria-labelledby="grl-colors-title">
 			<div class="grl-sheet-head">
 				<h2 id="grl-colors-title" class="grl-h2">Пять цветов</h2>
-				<p>Размеры: детский, стандартный и длинный. Шапочка с кисточкой и лента в комплекте.</p>
+				<p>Размеры: детский, стандарт и великан. Шапочка с кисточкой и лента в комплекте.</p>
 			</div>
 
 			<ol class="grl-strip">
@@ -181,7 +181,7 @@ function gr_landing_shortcode() {
 					<li class="grl-frame">
 						<a href="<?php echo esc_url( $catalog ); ?>" data-grl-color-link="<?php echo esc_attr( $key ); ?>">
 							<span class="grl-frame-img">
-								<img src="<?php echo esc_url( gr_landing_img( $img ) ); ?>" alt="Мантия, цвет: <?php echo esc_attr( mb_strtolower( $colors[ $key ] ) ); ?>" width="825" height="1100" loading="lazy">
+								<img src="<?php echo esc_url( $img ); ?>" alt="Мантия, цвет: <?php echo esc_attr( mb_strtolower( $colors[ $key ] ) ); ?>" width="900" height="1200" loading="lazy">
 							</span>
 							<span class="grl-frame-edge">
 								<span><?php echo esc_html( sprintf( '%02dA', $n ) ); ?></span>
@@ -228,18 +228,19 @@ function gr_landing_shortcode() {
 				<h2 id="grl-steps-title" class="grl-h2">Как забронировать</h2>
 				<ol class="grl-step-list">
 					<li>
-						<h3>Даты</h3>
-						<p>День получения и день возврата. Сразу видно, есть ли мантии в наличии.</p>
+						<h3>Дата и время</h3>
+						<p>Аренда — <?php echo (int) gr_rental_hours(); ?> часа, начало с 11:00 до 14:00. Сразу видно, какие мантии свободны.</p>
 					</li>
 					<li>
-						<h3>Цвета и размеры</h3>
-						<p>Нажмите на цвет, затем на размер и укажите количество. Можно выбрать несколько.</p>
+						<h3>Цвета, размеры и количество</h3>
+						<p>Можно смешивать цвета и размеры. Чем больше мантий, тем дешевле каждая — от <?php echo esc_html( gr_money( min( gr_price_tiers() ) ) ); ?>.</p>
 					</li>
 					<li>
-						<h3>Доставка или самовывоз</h3>
-						<p>Самовывоз бесплатно или доставка — <?php echo esc_html( $delivery ); ?> к точному времени. После праздника заберём мантии сами.</p>
+						<h3>Получение</h3>
+						<p>Самовывоз в Шымкенте, залог — удостоверение личности. Доставка бесплатно от <?php echo (int) $free; ?> мантий. Другой город — пишите в WhatsApp.</p>
 					</li>
 				</ol>
+				<?php echo gr_price_ladder_html(); // phpcs:ignore -- разметка из нашей функции ?>
 				<div class="grl-steps-actions">
 					<a class="grl-btn grl-btn-gold" href="<?php echo esc_url( $catalog ); ?>" data-grl-cta-plain>
 						Перейти в каталог

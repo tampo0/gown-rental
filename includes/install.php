@@ -63,6 +63,7 @@ function gr_install() {
 		customer_name varchar(100) NOT NULL,
 		phone varchar(30) NOT NULL,
 		email varchar(100) NOT NULL DEFAULT '',
+		time_from varchar(5) NOT NULL DEFAULT '',
 		delivery tinyint(1) NOT NULL DEFAULT 0,
 		delivery_time varchar(5) NOT NULL DEFAULT '',
 		pickup tinyint(1) NOT NULL DEFAULT 0,
@@ -82,7 +83,7 @@ function gr_install() {
 		KEY status (status)
 	) {$charset};";
 
-	// Позиции брони: «2 красных детских + 3 синих длинных» — это две строки.
+	// Позиции брони: «2 бордовых детских + 3 чёрных стандарт» — это две строки.
 	$sql_items = "CREATE TABLE {$items} (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		booking_id bigint(20) unsigned NOT NULL,
@@ -116,7 +117,6 @@ function gr_install() {
 	}
 
 	// Настройки по умолчанию (add_option не перезаписывает существующие).
-	add_option( 'gr_price_per_day', 3000 );
 	add_option( 'gr_delivery_fee', 3000 );
 	add_option( 'gr_pickup_address', 'г. Шымкент, Спортивный микрорайон, 4/11' );
 	add_option( 'gr_pickup_hours', 'Каждый день 9:30–18:00' );
@@ -127,6 +127,12 @@ function gr_install() {
 		add_option( 'gr_free_delivery_from', false === $old ? 20 : (int) $old + 1 );
 	}
 	delete_option( 'gr_free_delivery_over' );
+
+	// v0.14: доставка только от 100 мантий, своя почта для заявок.
+	if ( version_compare( (string) get_option( 'gr_db_version', '0' ), '0.14.0', '<' ) ) {
+		update_option( 'gr_free_delivery_from', 100 );
+	}
+	add_option( 'gr_contact_email', 'Aizhansaiymova@gmail.com' );
 	delete_option( 'gr_buffer_days' ); // убрано в 0.3.0
 
 	update_option( 'gr_db_version', GR_VERSION );

@@ -1,0 +1,35 @@
+/* Лесенка цен «чем больше мантий — тем дешевле»: каталог, главная, условия аренды. */
+
+.gr-ladder { --display: "Unbounded", "Golos Text", sans-serif; font-family: "Golos Text", system-ui, sans-serif; }
+.gr-ladder p { margin: 0; }
+.gr-ladder {
+	padding: 18px 18px 14px;
+	background: var(--ink, #121315);
+	color: #fff;
+	border-radius: 2px;
+}
+.gr-ladder-title { margin: 0 0 12px; font-family: var(--display); font-weight: 500; font-size: 0.98rem; line-height: 1.25; }
+.gr-ladder ol.gr-ladder-steps {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.gr-ladder-steps li {
+	display: grid;
+	gap: 2px;
+	margin: 0;
+	padding: 8px 6px;
+	border-radius: 2px;
+	background: rgba(255, 255, 255, 0.08);
+	text-align: center;
+	transition: background-color 0.25s, color 0.25s, transform 0.25s;
+}
+.gr-ladder-qty { font-size: 0.72rem; color: rgba(255, 255, 255, 0.7); }
+.gr-ladder-price { font-family: var(--display); font-weight: 700; font-size: 0.92rem; white-space: nowrap; }
+.gr-ladder-steps li.is-current { background: var(--gold, #d6b25e); color: var(--ink, #121315); transform: translateY(-2px); }
+.gr-ladder-steps li.is-current .gr-ladder-qty { color: var(--ink, #121315); }
+.gr-ladder-gift { margin: 10px 0 0; font-size: 0.8rem; color: var(--gold, #d6b25e); }
+

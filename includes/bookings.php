@@ -94,13 +94,17 @@ function gr_sanitize_booking( $raw ) {
 
 	$delivery = ! empty( $raw['delivery'] ) ? 1 : 0;
 	$pickup   = ! empty( $raw['pickup'] ) ? 1 : 0;
+	$time     = sanitize_text_field( $get( 'time_from' ) );
+	$from     = sanitize_text_field( $get( 'date_from' ) );
 
 	return array(
 		'customer_name' => sanitize_text_field( $get( 'customer_name' ) ),
 		'phone'         => sanitize_text_field( $get( 'phone' ) ),
 		'email'         => sanitize_email( $get( 'email' ) ),
-		'date_from'     => sanitize_text_field( $get( 'date_from' ) ),
-		'date_to'       => sanitize_text_field( $get( 'date_to' ) ),
+		'date_from'     => $from,
+		// Аренда со временем — 3 часа в один день; без времени (другие города) — период целыми днями.
+		'date_to'       => $time ? $from : sanitize_text_field( $get( 'date_to' ) ),
+		'time_from'     => $time,
 		'delivery'      => $delivery,
 		'delivery_time' => $delivery ? sanitize_text_field( $get( 'delivery_time' ) ) : '',
 		'pickup'        => $pickup,
@@ -119,11 +123,11 @@ function gr_sanitize_booking( $raw ) {
  *
  * @param int $exclude_id Бронь, которую не учитывать (при редактировании — саму себя).
  */
-function gr_check_items_availability( $items, $from, $to, $exclude_id = 0 ) {
+function gr_check_items_availability( $items, $from, $to, $exclude_id = 0, $time = '' ) {
 	$errors = array();
 	foreach ( $items as $item ) {
 		$item      = (array) $item;
-		$available = gr_get_available( $item['color'], $item['size'], $from, $to, $exclude_id );
+		$available = gr_get_available( $item['color'], $item['size'], $from, $to, $exclude_id, $time );
 		if ( (int) $item['quantity'] > $available ) {
 			$errors[] = sprintf(
 				'Недостаточно мантий: %s, %s на %s – %s. Свободно: %d, нужно: %d.',
@@ -189,12 +193,19 @@ function gr_validate_booking( $data, $id = 0 ) {
 		$errors[] = 'Максимальный срок аренды — ' . gr_max_rental_days() . ' дней.';
 	}
 
-	// Доставка и забор.
+	if ( '' !== $data['time_from'] && ! gr_is_valid_time( $data['time_from'] ) ) {
+		$errors[] = 'Неверное время начала аренды.';
+	}
+
+	// Доставка (только от 100 мантий) и забор.
+	if ( $data['delivery'] && gr_items_total_quantity( $data['items'] ) < gr_free_delivery_from() ) {
+		$errors[] = 'Доставка — от ' . gr_free_delivery_from() . ' мантий. Для меньшего заказа только самовывоз.';
+	}
 	if ( ( $data['delivery'] || $data['pickup'] ) && '' === $data['address'] ) {
 		$errors[] = 'Укажите адрес доставки.';
 	}
-	if ( $data['delivery'] && ! gr_is_valid_time( $data['delivery_time'] ) ) {
-		$errors[] = 'Укажите точное время доставки.';
+	if ( $data['delivery'] && '' !== $data['delivery_time'] && ! gr_is_valid_time( $data['delivery_time'] ) ) {
+		$errors[] = 'Неверное время доставки.';
 	}
 	if ( $data['pickup'] && '' !== $data['pickup_time'] && ! gr_is_valid_time( $data['pickup_time'] ) ) {
 		$errors[] = 'Неверное время, когда забрать мантии.';
@@ -203,7 +214,7 @@ function gr_validate_booking( $data, $id = 0 ) {
 	// Главная проверка: хватит ли мантий на эти даты.
 	// Делаем её, только если остальное верно и бронь «активная».
 	if ( ! $errors && in_array( $data['status'], gr_active_statuses(), true ) ) {
-		$errors = gr_check_items_availability( $data['items'], $data['date_from'], $data['date_to'], $id );
+		$errors = gr_check_items_availability( $data['items'], $data['date_from'], $data['date_to'], $id, $data['time_from'] );
 	}
 
 	return $errors;
@@ -316,7 +327,7 @@ function gr_set_booking_status( $id, $status ) {
 	}
 
 	if ( in_array( $status, gr_active_statuses(), true ) ) {
-		$errors = gr_check_items_availability( $booking->items, $booking->date_from, $booking->date_to, $booking->id );
+		$errors = gr_check_items_availability( $booking->items, $booking->date_from, $booking->date_to, $booking->id, $booking->time_from );
 		if ( $errors ) {
 			gr_unlock();
 			return new WP_Error( 'gr_invalid', implode( "\n", $errors ) );

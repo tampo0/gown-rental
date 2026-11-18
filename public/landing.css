@@ -859,3 +859,20 @@
 .gr-landing-page .site-footer-wrap,
 .gr-landing-page .site-footer .site-footer-row-container-inner { background: #fafaf8; }
 .gr-landing-page .site-footer a { color: inherit; text-decoration: underline; text-decoration-color: #d6b25e; text-underline-offset: 3px; }
+
+/* v0.14: время начала аренды */
+.grl .grl-field select {
+	width: 100%;
+	min-height: 52px;
+	padding: 0 12px;
+	border: 1.5px solid var(--line);
+	border-radius: 10px;
+	background: #fff;
+	color: var(--ink);
+	font: 500 1rem/1 var(--text);
+	font-variant-numeric: tabular-nums;
+}
+.grl .grl-field select:focus { outline: none; border-color: var(--ink); }
+.grl-terms a { color: var(--ink); text-decoration-color: var(--gold); text-underline-offset: 3px; }
+.grl-steps-copy .gr-ladder { margin-top: 24px; max-width: 520px; }
+.grl .grl-pricetag-per:first-child { margin-bottom: -4px; }

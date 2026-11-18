@@ -96,9 +96,8 @@ function gr_check_request( $nonce_action ) {
 
 function gr_register_settings() {
 	$int = array( 'type' => 'integer', 'sanitize_callback' => 'absint' );
-	register_setting( 'gr_settings', 'gr_price_per_day', $int );
-	register_setting( 'gr_settings', 'gr_delivery_fee', $int );
 	register_setting( 'gr_settings', 'gr_free_delivery_from', $int );
+	register_setting( 'gr_settings', 'gr_contact_email', array( 'type' => 'string', 'sanitize_callback' => 'sanitize_email' ) );
 	$text = array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' );
 	register_setting( 'gr_settings', 'gr_pickup_address', $text );
 	register_setting( 'gr_settings', 'gr_pickup_hours', $text );
@@ -117,27 +116,22 @@ function gr_settings_page() {
 		<form method="post" action="options.php">
 			<?php settings_fields( 'gr_settings' ); ?>
 
-			<h2>Цены</h2>
+			<h2>Почта и доставка</h2>
 			<table class="form-table">
 				<tr>
-					<th><label for="gr_price_per_day">Аренда одной мантии за сутки (₸)</label></th>
-					<td><input type="number" min="0" step="100" id="gr_price_per_day" name="gr_price_per_day"
-						value="<?php echo esc_attr( gr_price_per_day() ); ?>" class="regular-text"></td>
-				</tr>
-				<tr>
-					<th><label for="gr_delivery_fee">Доставка туда и обратно (₸)</label></th>
+					<th><label for="gr_contact_email">Email для заявок</label></th>
 					<td>
-						<input type="number" min="0" step="100" id="gr_delivery_fee" name="gr_delivery_fee"
-							value="<?php echo esc_attr( gr_delivery_fee() ); ?>" class="regular-text">
-						<p class="description">Одна сумма: привезти мантии и забрать их обратно.</p>
+						<input type="email" id="gr_contact_email" name="gr_contact_email" value="<?php echo esc_attr( gr_contact_email() ); ?>" class="regular-text">
+						<p class="description">Сюда приходят новые брони и сообщения из формы «Напишите нам». Он же показан на страницах «Контакты» и «Политика конфиденциальности».</p>
 					</td>
 				</tr>
 				<tr>
-					<th><label for="gr_free_delivery_from">Бесплатная доставка от</label></th>
+					<th><label for="gr_free_delivery_from">Доставка (бесплатно) от</label></th>
 					<td><input type="number" min="1" id="gr_free_delivery_from" name="gr_free_delivery_from"
-						value="<?php echo esc_attr( gr_free_delivery_from() ); ?>" class="small-text"> мантий (включительно)</td>
+						value="<?php echo esc_attr( gr_free_delivery_from() ); ?>" class="small-text"> мантий. Меньше — только самовывоз.</td>
 				</tr>
 			</table>
+			<p class="description">Цены за мантию (1–2 шт. — 5 000 ₸ … от 10 шт. — 2 000 ₸) задаются в коде: <code>gr_price_tiers()</code> в includes/config.php.</p>
 
 			<h2>Самовывоз</h2>
 			<p class="description">Показывается в каталоге, когда клиент выбирает самовывоз.</p>

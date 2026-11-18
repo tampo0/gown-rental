@@ -17,16 +17,11 @@ function gr_loss_fees() {
 	);
 }
 
-/** Штраф за просрочку возврата: за каждую мантию за каждый день (₸). */
-function gr_late_fee() {
-	return 5000; // за каждую мантию за каждый день
-}
-
 /** Контакты (со страницы «Контакты»). */
 function gr_contacts() {
 	return array(
 		'phone'      => '+7 705 574 26 26',
-		'email'      => 'info@prokat-mantiy.example',
+		'email'      => gr_contact_email(),
 		'hours'      => array(
 			'Каждый день' => '9:30–18:00',
 		),
@@ -47,7 +42,7 @@ function gr_pages_assets() {
 		return;
 	}
 	wp_enqueue_style( 'gr-pages-fonts', 'https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap', array(), null );
-	wp_enqueue_style( 'gr-pages', GR_URL . 'public/pages.css', array( 'gr-pages-fonts' ), GR_VERSION );
+	wp_enqueue_style( 'gr-pages', GR_URL . 'public/pages.css', array( 'gr-pages-fonts', 'gr-ladder' ), GR_VERSION );
 }
 add_action( 'wp_enqueue_scripts', 'gr_pages_assets' );
 
@@ -77,10 +72,8 @@ function gr_icon( $name ) {
  * ---------------------------------------------------------------------- */
 
 function gr_terms_shortcode() {
-	$price = gr_money( gr_price_per_day() );
-	$fee   = gr_money( gr_delivery_fee() );
-	$free  = (int) gr_free_delivery_from();
-	$late  = gr_money( gr_late_fee() );
+	$free = (int) gr_free_delivery_from();
+	$wa   = gr_whatsapp_url();
 
 	ob_start();
 	?>
@@ -93,43 +86,49 @@ function gr_terms_shortcode() {
 			<div class="grp-terms-main">
 
 				<section class="grp-block" aria-labelledby="grp-how">
-					<h2 id="grp-how" class="grp-h2">Как проходит аренда</h2>
+					<h2 id="grp-how" class="grp-h2">Как проходит аренда в Шымкенте</h2>
 					<ol class="grp-steps">
 						<li>
 							<h3>Бронь</h3>
-							<p>Выберите в <a href="<?php echo esc_url( gr_catalog_url() ); ?>">каталоге</a> даты, цвета и размеры. Мы напишем вам в WhatsApp, чтобы подтвердить бронь.</p>
+							<p>Выберите в <a href="<?php echo esc_url( gr_catalog_url() ); ?>">каталоге</a> дату, время начала, цвета и размеры. Мы напишем вам в WhatsApp, чтобы подтвердить бронь.</p>
 						</li>
 						<li>
 							<h3>Оплата</h3>
-							<p>Оплачиваете после подтверждения брони.</p>
+							<p>После подтверждения брони.</p>
 						</li>
 						<li>
 							<h3>Получение</h3>
-							<p>Самовывоз бесплатно — <?php echo esc_html( gr_pickup_address() ); ?>. Доставка — <?php echo esc_html( $fee ); ?>: привезём к нужному времени и сами заберём после праздника. От <?php echo esc_html( $free ); ?> мантий доставка бесплатная.</p>
+							<p>Самовывоз — <?php echo esc_html( gr_pickup_address() ); ?>. Доставка — бесплатно, от <?php echo (int) $free; ?> мантий.</p>
 						</li>
 						<li>
-							<h3>Возврат</h3>
-							<p>В последний день брони.</p>
+							<h3>Аренда — <?php echo (int) gr_rental_hours(); ?> часа</h3>
+							<p>Начало — с 11:00 до 14:00, вернуть через <?php echo (int) gr_rental_hours(); ?> часа. Например, взяли в 11:30 — вернуть до 14:30.</p>
 						</li>
 					</ol>
 				</section>
 
-				<section class="grp-block" aria-labelledby="grp-kit">
-					<h2 id="grp-kit" class="grp-h2">Что входит в комплект</h2>
-					<p class="grp-text">Мантия, шапочка с кисточкой и лента. Аренда — <strong><?php echo esc_html( $price ); ?> за комплект в сутки</strong>, день получения и день возврата тоже считаются.</p>
+				<section class="grp-block" aria-labelledby="grp-cities">
+					<h2 id="grp-cities" class="grp-h2">Другие города</h2>
+					<p class="grp-text">Аренда на сутки — с учётом времени на перевозку. Заказ — через <a href="<?php echo esc_url( $wa ); ?>" target="_blank" rel="noopener">WhatsApp</a>.</p>
 				</section>
 
-				<section class="grp-block" aria-labelledby="grp-care">
-					<h2 id="grp-care" class="grp-h2">Берегите комплект</h2>
-					<p class="grp-text">Пожалуйста, верните всё в целости и сохранности: мантии, шапочки и ленты. Перед возвратом пересчитайте комплекты — особенно если брали на всю группу. За утерянные вещи берётся штраф — суммы в блоке «Штрафы».</p>
+				<section class="grp-block" aria-labelledby="grp-prices">
+					<h2 id="grp-prices" class="grp-h2">Цены</h2>
+					<p class="grp-text">Цена за одну мантию на всю аренду. Чем больше мантий в брони, тем дешевле каждая — по этой цене считаются все мантии заказа.</p>
+					<?php echo gr_price_ladder_html(); // phpcs:ignore -- разметка из нашей функции ?>
+					<p class="grp-text">В комплекте: мантия, шапочка с кисточкой и лента.</p>
+				</section>
+
+				<section class="grp-block" aria-labelledby="grp-deposit">
+					<h2 id="grp-deposit" class="grp-h2">Залог</h2>
+					<p class="grp-text">При самовывозе оставьте <strong>оригинал удостоверения личности</strong>. Если его нет — <strong>фото удостоверения и 10 000 ₸</strong>. Всё вернём, когда вы сдадите мантии.</p>
 				</section>
 			</div>
 
 			<!-- Квитанция штрафов -->
 			<aside class="grp-receipt" aria-labelledby="grp-fees">
-				<h2 id="grp-fees" class="grp-receipt-title">Штрафы</h2>
-
-				<p class="grp-receipt-sub">За утерю, за 1 шт.</p>
+				<h2 id="grp-fees" class="grp-receipt-title">Берегите комплект</h2>
+				<p class="grp-receipt-sub">Штраф за утерю, за 1 шт.</p>
 				<ul class="grp-lines">
 					<?php foreach ( gr_loss_fees() as $item => $sum ) : ?>
 						<li><span><?php echo esc_html( $item ); ?></span><span><?php echo esc_html( gr_money( $sum ) ); ?></span></li>
@@ -138,17 +137,16 @@ function gr_terms_shortcode() {
 
 				<div class="grp-late">
 					<p class="grp-receipt-sub">Просрочка возврата</p>
-					<p class="grp-late-sum"><?php echo esc_html( $late ); ?><span>за каждую мантию в день</span></p>
-					<p class="grp-late-note">Например, 3 мантии на 2 дня позже — <span class="grp-nowrap"><?php echo esc_html( gr_money( gr_late_fee() * 6 ) ); ?></span>. Считается с первого дня после согласованной даты. Если не успеваете — напишите нам заранее, постараемся продлить бронь.</p>
+					<p class="grp-late-note">Рассчитывается отдельно в каждой ситуации. Не успеваете вернуть вовремя — напишите нам заранее.</p>
 				</div>
 			</aside>
 		</div>
 
 		<section class="grp-cta" aria-label="Перейти к бронированию">
-			<p class="grp-cta-text">Всё понятно? Выберите мантии на свои даты.</p>
+			<p class="grp-cta-text">Всё понятно? Выберите мантии на свою дату.</p>
 			<div class="grp-cta-actions">
 				<a class="grp-btn grp-btn-gold" href="<?php echo esc_url( gr_catalog_url() ); ?>">Перейти в каталог <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-				<a class="grp-btn grp-btn-line" href="<?php echo esc_url( gr_whatsapp_url() ); ?>" target="_blank" rel="noopener">Задать вопрос в WhatsApp</a>
+				<a class="grp-btn grp-btn-line" href="<?php echo esc_url( $wa ); ?>" target="_blank" rel="noopener">Задать вопрос в WhatsApp</a>
 			</div>
 		</section>
 	</div>
@@ -257,6 +255,7 @@ function gr_privacy_shortcode() {
 				<ul class="grp-list">
 					<li>При бронировании — имя, телефон, email (по желанию), адрес доставки, комментарий, выбранные мантии и даты.</li>
 					<li>Через форму «Напишите нам» — имя, телефон, email и текст сообщения.</li>
+					<li>При получении мантий — удостоверение личности как залог: оригинал (возвращаем при сдаче мантий) или его фото.</li>
 				</ul>
 			</section>
 
@@ -272,7 +271,7 @@ function gr_privacy_shortcode() {
 
 			<section>
 				<h2 class="grp-h2">Как храним</h2>
-				<p class="grp-text">Данные хранятся в базе сайта и доступны только администратору проката. Мы храним их, пока это нужно для выполнения брони и учёта возврата мантий.</p>
+				<p class="grp-text">Данные хранятся в базе сайта и доступны только администратору проката. Мы храним их, пока это нужно для выполнения брони и учёта возврата мантий. Фото удостоверения удаляем после возврата мантий и залога.</p>
 			</section>
 
 			<section>
@@ -285,3 +284,19 @@ function gr_privacy_shortcode() {
 	return ob_get_clean();
 }
 add_shortcode( 'gown_privacy', 'gr_privacy_shortcode' );
+
+/* -------------------------------------------------------------------------
+ * Contact Form 7: письма с формы «Напишите нам» — на email из настроек плагина
+ * ---------------------------------------------------------------------- */
+
+add_filter(
+	'wpcf7_mail_components',
+	function ( $components, $form, $mail ) {
+		if ( 'mail' === $mail->name() ) { // только письмо нам, не автоответ клиенту
+			$components['recipient'] = gr_contact_email();
+		}
+		return $components;
+	},
+	10,
+	3
+);

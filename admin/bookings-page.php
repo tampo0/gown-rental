@@ -107,10 +107,10 @@ function gr_render_bookings_list() {
 						<?php endforeach; ?>
 						<small>всего: <?php echo (int) gr_items_total_quantity( $b->items ); ?></small>
 					</td>
-					<td><?php echo esc_html( gr_format_date( $b->date_from ) . ' – ' . gr_format_date( $b->date_to ) ); ?></td>
+					<td><?php echo esc_html( $b->time_from ? gr_format_date( $b->date_from ) . ', ' . $b->time_from . '–' . gr_end_time( $b->time_from ) : gr_format_date( $b->date_from ) . ' – ' . gr_format_date( $b->date_to ) ); ?></td>
 					<td>
 						<?php if ( $b->delivery ) : ?>
-							<div>🚚 привезти в <?php echo esc_html( $b->delivery_time ); ?></div>
+							<div>🚚 доставка<?php echo $b->time_from ? ' к ' . esc_html( $b->time_from ) : ''; ?></div>
 						<?php else : ?>
 							<div>Самовывоз</div>
 						<?php endif; ?>
@@ -196,6 +196,7 @@ function gr_render_booking_form( $booking ) {
 		'email'         => '',
 		'date_from'     => '',
 		'date_to'       => '',
+		'time_from'     => '',
 		'delivery'      => 0,
 		'delivery_time' => '',
 		'pickup'        => 0,
@@ -287,24 +288,27 @@ function gr_render_booking_form( $booking ) {
 				<?php gr_render_item_row( '__i__', array( 'color' => '', 'size' => '', 'quantity' => 1 ) ); ?>
 			</template>
 
-			<h2>Даты</h2>
+			<h2>Дата и время</h2>
 			<table class="form-table">
 				<tr>
-					<th>Даты *</th>
+					<th>Дата *</th>
 					<td>
 						<label>с <input type="date" name="date_from" required value="<?php echo esc_attr( $data['date_from'] ); ?>"></label>
-						<label>по <input type="date" name="date_to" required value="<?php echo esc_attr( $data['date_to'] ); ?>"></label>
-						<p class="description">День получения и день возврата (оба дня включительно).
-							Со следующего дня после возврата мантии можно выдать снова.</p>
+						<label>по <input type="date" name="date_to" value="<?php echo esc_attr( $data['date_to'] ); ?>"></label>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="gr_time_from">Начало аренды</label></th>
+					<td>
+						<input type="time" id="gr_time_from" name="time_from" value="<?php echo esc_attr( $data['time_from'] ); ?>">
+						<p class="description">Шымкент: укажите время — аренда <?php echo (int) gr_rental_hours(); ?> часа в день «с», поле «по» не нужно.
+							Другие города: оставьте время пустым и укажите даты «с … по» — мантии заняты целыми днями.</p>
 					</td>
 				</tr>
 			</table>
 
 			<h2>Доставка</h2>
-			<p class="description">
-				Доставка и забор — по <?php echo esc_html( gr_money( gr_delivery_fee() ) ); ?> каждый,
-				бесплатно при заказе от <?php echo (int) gr_free_delivery_from(); ?> мантий. Сумма считается автоматически.
-			</p>
+			<p class="description">Доставка — бесплатно и только от <?php echo (int) gr_free_delivery_from(); ?> мантий. Остальным — самовывоз.</p>
 			<table class="form-table">
 				<tr>
 					<th>Доставить</th>
@@ -347,7 +351,7 @@ function gr_render_booking_form( $booking ) {
 				<tr>
 					<th><label for="gr_note">Комментарий</label></th>
 					<td><textarea id="gr_note" name="note" rows="4" class="large-text"
-						placeholder="Например: 12.05 клиент написал в WhatsApp, добавил 2 синих длинных"><?php echo esc_textarea( $data['note'] ); ?></textarea></td>
+						placeholder="Например: 12.05 клиент написал в WhatsApp, добавил 2 бордовых «великан»"><?php echo esc_textarea( $data['note'] ); ?></textarea></td>
 				</tr>
 			</table>
 
