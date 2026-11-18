@@ -123,7 +123,7 @@ function gr_landing_shortcode() {
 					</div>
 
 					<div class="grl-slate-result" aria-live="polite">
-						<p class="grl-slate-hint" data-grl-hint>Аренда — <?php echo (int) gr_rental_hours(); ?> часа, начало с <?php echo esc_html( gr_start_window() ); ?> (вернуть до 18:00). Выберите дату и время — покажем, какие цвета свободны.</p>
+						<p class="grl-slate-hint" data-grl-hint>Аренда — <?php echo (int) gr_rental_hours(); ?> часа. Выберите дату и время.</p>
 						<ul class="grl-counts" data-grl-counts hidden>
 							<?php foreach ( $colors as $key => $label ) : ?>
 								<li style="--fabric: <?php echo esc_attr( $hex[ $key ] ); ?>">
