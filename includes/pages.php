@@ -1,0 +1,231 @@
+<?php
+/**
+ * Страницы «Условия аренды» [gown_terms] и «Контакты» [gown_contacts]
+ * в том же стиле, что главная и каталог. Тексты — прямо здесь.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/** Штрафы за утерю (₸). Меняйте суммы здесь. */
+function gr_loss_fees() {
+	return array(
+		'Мантия'                => 12000,
+		'Шапочка с кисточкой'   => 6000,
+		'Лента'                 => 3000,
+	);
+}
+
+/** Штраф за просрочку возврата: за каждую мантию за каждый день (₸). */
+function gr_late_fee() {
+	return 5000; // за каждую мантию за каждый день
+}
+
+/** Контакты (со страницы «Контакты»). */
+function gr_contacts() {
+	return array(
+		'phone'      => '+7 705 574 26 26',
+		'email'      => 'info@prokat-mantiy.example',
+		'hours'      => array(
+			'Каждый день' => '9:30–18:00',
+		),
+		'hours_note' => '',
+	);
+}
+
+/* -------------------------------------------------------------------------
+ * Стили — только на этих страницах
+ * ---------------------------------------------------------------------- */
+
+function gr_page_has( $tag ) {
+	return is_singular() && has_shortcode( (string) get_post_field( 'post_content', get_queried_object_id() ), $tag );
+}
+
+function gr_pages_assets() {
+	if ( ! gr_page_has( 'gown_terms' ) && ! gr_page_has( 'gown_contacts' ) ) {
+		return;
+	}
+	wp_enqueue_style( 'gr-pages-fonts', 'https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap', array(), null );
+	wp_enqueue_style( 'gr-pages', GR_URL . 'public/pages.css', array( 'gr-pages-fonts' ), GR_VERSION );
+}
+add_action( 'wp_enqueue_scripts', 'gr_pages_assets' );
+
+function gr_pages_body_class( $classes ) {
+	if ( gr_page_has( 'gown_terms' ) || gr_page_has( 'gown_contacts' ) ) {
+		$classes[] = 'gr-landing-page';
+		$classes[] = 'gr-studio-page';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'gr_pages_body_class' );
+
+function gr_icon( $name ) {
+	$paths = array(
+		'phone' => '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+		'chat'  => '<path d="M4 20l1.4-4A8 8 0 1 1 8 18.6z"/><path d="M9 10h6M9 13.5h4"/>',
+		'mail'  => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+		'pin'   => '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+		'clock' => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+		'arrow' => '<path d="M7 17L17 7M9 7h8v8"/>',
+	);
+	return '<svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' . $paths[ $name ] . '</svg>';
+}
+
+/* -------------------------------------------------------------------------
+ * [gown_terms] — Условия аренды
+ * ---------------------------------------------------------------------- */
+
+function gr_terms_shortcode() {
+	$price = gr_money( gr_price_per_day() );
+	$fee   = gr_money( gr_delivery_fee() );
+	$free  = (int) gr_free_delivery_from();
+	$late  = gr_money( gr_late_fee() );
+
+	ob_start();
+	?>
+	<div class="grp">
+		<header class="grp-head">
+			<h1 class="grp-title">Условия аренды</h1>
+		</header>
+
+		<div class="grp-terms">
+			<div class="grp-terms-main">
+
+				<section class="grp-block" aria-labelledby="grp-how">
+					<h2 id="grp-how" class="grp-h2">Как проходит аренда</h2>
+					<ol class="grp-steps">
+						<li>
+							<h3>Бронь</h3>
+							<p>Выберите в <a href="<?php echo esc_url( gr_catalog_url() ); ?>">каталоге</a> даты, цвета и размеры. Мы напишем вам в WhatsApp, чтобы подтвердить бронь.</p>
+						</li>
+						<li>
+							<h3>Оплата</h3>
+							<p>Оплачиваете после подтверждения брони.</p>
+						</li>
+						<li>
+							<h3>Получение</h3>
+							<p>Самовывоз бесплатно — <?php echo esc_html( gr_pickup_address() ); ?>. Доставка — <?php echo esc_html( $fee ); ?>: привезём к нужному времени и сами заберём после праздника. От <?php echo esc_html( $free ); ?> мантий доставка бесплатная.</p>
+						</li>
+						<li>
+							<h3>Возврат</h3>
+							<p>В последний день брони.</p>
+						</li>
+					</ol>
+				</section>
+
+				<section class="grp-block" aria-labelledby="grp-kit">
+					<h2 id="grp-kit" class="grp-h2">Что входит в комплект</h2>
+					<p class="grp-text">Мантия, шапочка с кисточкой и лента. Аренда — <strong><?php echo esc_html( $price ); ?> за комплект в сутки</strong>, день получения и день возврата тоже считаются.</p>
+				</section>
+
+				<section class="grp-block" aria-labelledby="grp-care">
+					<h2 id="grp-care" class="grp-h2">Берегите комплект</h2>
+					<p class="grp-text">Пожалуйста, верните всё в целости и сохранности: мантии, шапочки и ленты. Перед возвратом пересчитайте комплекты — особенно если брали на всю группу. За утерянные вещи берётся штраф — суммы в блоке «Штрафы».</p>
+				</section>
+			</div>
+
+			<!-- Квитанция штрафов -->
+			<aside class="grp-receipt" aria-labelledby="grp-fees">
+				<h2 id="grp-fees" class="grp-receipt-title">Штрафы</h2>
+
+				<p class="grp-receipt-sub">За утерю, за 1 шт.</p>
+				<ul class="grp-lines">
+					<?php foreach ( gr_loss_fees() as $item => $sum ) : ?>
+						<li><span><?php echo esc_html( $item ); ?></span><span><?php echo esc_html( gr_money( $sum ) ); ?></span></li>
+					<?php endforeach; ?>
+				</ul>
+
+				<div class="grp-late">
+					<p class="grp-receipt-sub">Просрочка возврата</p>
+					<p class="grp-late-sum"><?php echo esc_html( $late ); ?><span>за каждую мантию в день</span></p>
+					<p class="grp-late-note">Например, 3 мантии на 2 дня позже — <span class="grp-nowrap"><?php echo esc_html( gr_money( gr_late_fee() * 6 ) ); ?></span>. Считается с первого дня после согласованной даты. Если не успеваете — напишите нам заранее, постараемся продлить бронь.</p>
+				</div>
+			</aside>
+		</div>
+
+		<section class="grp-cta" aria-label="Перейти к бронированию">
+			<p class="grp-cta-text">Всё понятно? Выберите мантии на свои даты.</p>
+			<div class="grp-cta-actions">
+				<a class="grp-btn grp-btn-gold" href="<?php echo esc_url( gr_catalog_url() ); ?>">Перейти в каталог <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+				<a class="grp-btn grp-btn-line" href="<?php echo esc_url( gr_whatsapp_url() ); ?>" target="_blank" rel="noopener">Задать вопрос в WhatsApp</a>
+			</div>
+		</section>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+add_shortcode( 'gown_terms', 'gr_terms_shortcode' );
+
+/* -------------------------------------------------------------------------
+ * [gown_contacts] — Контакты
+ * ---------------------------------------------------------------------- */
+
+function gr_contacts_shortcode() {
+	$c     = gr_contacts();
+	$tel   = 'tel:' . preg_replace( '/[^\d+]/', '', $c['phone'] );
+	$forms = get_posts( array( 'post_type' => 'wpcf7_contact_form', 'numberposts' => 1, 'fields' => 'ids' ) );
+
+	ob_start();
+	?>
+	<div class="grp">
+		<header class="grp-head">
+			<h1 class="grp-title">Контакты</h1>
+			<p class="grp-lead">Поможем подобрать мантию по размеру и цвету, ответим на вопросы об аренде. Быстрее всего — в WhatsApp.</p>
+		</header>
+
+		<div class="grp-contacts">
+			<div class="grp-contact-list">
+				<a class="grp-contact grp-contact-wa" href="<?php echo esc_url( gr_whatsapp_url() ); ?>" target="_blank" rel="noopener">
+					<img class="grp-wa-icon" src="<?php echo esc_url( gr_landing_img( 'whatsapp' ) ); ?>" alt="" width="44" height="44">
+					<span><small>WhatsApp — быстрее всего</small>Написать нам</span>
+				</a>
+				<a class="grp-contact" href="<?php echo esc_attr( $tel ); ?>">
+					<?php echo gr_icon( 'phone' ); // phpcs:ignore ?>
+					<span><small>Телефон</small><?php echo esc_html( $c['phone'] ); ?></span>
+				</a>
+				<a class="grp-contact" href="<?php echo esc_attr( 'mailto:' . $c['email'] ); ?>">
+					<?php echo gr_icon( 'mail' ); // phpcs:ignore ?>
+					<span><small>Email</small><?php echo esc_html( $c['email'] ); ?></span>
+				</a>
+
+				<div class="grp-contact grp-contact-static">
+					<?php echo gr_icon( 'pin' ); // phpcs:ignore ?>
+					<span>
+						<small>Адрес пункта проката</small><?php echo esc_html( gr_pickup_address() ); ?>
+						<a class="grp-map" href="<?php echo esc_url( gr_2gis_url() ); ?>" target="_blank" rel="noopener">Открыть в 2ГИС <?php echo gr_icon( 'arrow' ); // phpcs:ignore ?></a>
+					</span>
+				</div>
+
+				<div class="grp-contact grp-contact-static">
+					<?php echo gr_icon( 'clock' ); // phpcs:ignore ?>
+					<span>
+						<small>Часы работы</small>
+						<dl class="grp-hours">
+							<?php foreach ( $c['hours'] as $day => $time ) : ?>
+								<div><dt><?php echo esc_html( $day ); ?></dt><dd><?php echo esc_html( $time ); ?></dd></div>
+							<?php endforeach; ?>
+						</dl>
+						<?php if ( $c['hours_note'] ) : ?>
+							<em><?php echo esc_html( $c['hours_note'] ); ?></em>
+						<?php endif; ?>
+					</span>
+				</div>
+			</div>
+
+			<section class="grp-form" aria-labelledby="grp-form-title">
+				<p class="grp-form-band" aria-hidden="true"><span>Сцена: вопрос</span><span>Перезвоним за 30 минут</span></p>
+				<h2 id="grp-form-title" class="grp-h2">Напишите нам</h2>
+				<p class="grp-text">Оставьте сообщение — перезвоним в течение 30 минут в рабочее время.</p>
+				<?php
+				if ( $forms ) {
+					echo do_shortcode( '[contact-form-7 id="' . (int) $forms[0] . '"]' ); // phpcs:ignore -- разметка формы от Contact Form 7
+				}
+				?>
+			</section>
+		</div>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+add_shortcode( 'gown_contacts', 'gr_contacts_shortcode' );

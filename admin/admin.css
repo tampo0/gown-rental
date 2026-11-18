@@ -1,0 +1,80 @@
+/* Админка проката мантий */
+
+.gr-admin .gr-filters {
+	margin: 12px 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	align-items: center;
+}
+
+/* Цвет строки по статусу */
+.gr-bookings-table tr.gr-row-new td:first-child { box-shadow: inset 4px 0 #d63638; }
+.gr-bookings-table tr.gr-row-confirmed td:first-child { box-shadow: inset 4px 0 #2271b1; }
+.gr-bookings-table tr.gr-row-issued td:first-child { box-shadow: inset 4px 0 #dba617; }
+.gr-bookings-table tr.gr-row-returned td:first-child { box-shadow: inset 4px 0 #00a32a; }
+.gr-bookings-table tr.gr-row-cancelled { opacity: 0.6; }
+
+.gr-status-result {
+	display: inline-block;
+	min-width: 1em;
+	margin-left: 4px;
+}
+
+.gr-status-result.is-ok { color: #00a32a; font-weight: 700; }
+
+.gr-delete { color: #b32d2e; }
+
+/* Позиции в форме брони */
+.gr-item-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.gr-remove-item { color: #b32d2e; }
+
+/* Фото в настройках */
+.gr-photos {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: 16px;
+	max-width: 900px;
+}
+
+.gr-photo-field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+}
+
+.gr-photo-preview {
+	display: grid;
+	place-items: center;
+	height: 160px;
+	background: #f6f7f7;
+	border-radius: 4px;
+	overflow: hidden;
+	color: #787c82;
+}
+
+.gr-photo-preview img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.gr-dot {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	margin-right: 6px;
+	vertical-align: -1px;
+}

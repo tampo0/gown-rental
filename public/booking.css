@@ -1,0 +1,790 @@
+/* Каталог мантий — тот же мир, что и главная: белый фон студии, кадры с плёнкой, хлопушка с датами. */
+
+.grc {
+	--sweep: #fafaf8;
+	--paper: #ffffff;
+	--ink: #121315;
+	--ink-soft: #4a4d53;
+	--gold: #d6b25e;
+	--gold-deep: #8f6d22;
+	--film: #141414;
+	--film-edge: #e9a93c;
+	--line: rgba(18, 19, 21, 0.16);
+	--ok: #1b6b3a;
+	--err: #b42318;
+	--err-bg: #fdecea;
+	--display: "Unbounded", "Golos Text", sans-serif;
+	--text: "Golos Text", system-ui, sans-serif;
+	--gutter: clamp(16px, 4vw, 56px);
+	--ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+	max-width: 1520px;
+	margin: 0 auto;
+	padding: clamp(24px, 4vw, 56px) var(--gutter) clamp(56px, 8vw, 112px);
+	font-family: var(--text);
+	font-size: 1rem;
+	line-height: 1.55;
+	color: var(--ink);
+	-webkit-font-smoothing: antialiased;
+}
+
+.grc *,
+.grc *::before,
+.grc *::after { box-sizing: border-box; }
+
+.grc ::selection { background: var(--gold); color: var(--ink); }
+
+/* Скрытые блоки остаются скрытыми, даже если у них display: grid/flex. */
+.gr-catalog [hidden] { display: none !important; }
+
+.grc p { margin: 0; }
+.grc img { display: block; max-width: 100%; height: auto; }
+
+.grc button:focus-visible,
+.grc input:focus-visible,
+.grc textarea:focus-visible,
+.grc a:focus-visible {
+	outline: 2px solid var(--ink);
+	outline-offset: 3px;
+}
+
+/* ---------- Заголовок страницы ---------- */
+.grc-head {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+	gap: 16px 48px;
+	align-items: end;
+	margin-bottom: clamp(32px, 4vw, 56px);
+}
+
+.grc .grc-title {
+	margin: 0;
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: clamp(2.2rem, 4.4vw, 4.6rem);
+	line-height: 1.02;
+	letter-spacing: -0.035em;
+	color: var(--ink);
+	text-wrap: balance;
+}
+
+/* Бирка с ценой на каждом кадре */
+.grc-tag {
+	position: absolute;
+	bottom: 12px;
+	right: 12px;
+	z-index: 1;
+	padding: 6px 10px 6px 12px;
+	border-radius: 999px;
+	background: #fff;
+	color: var(--ink);
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: 0.86rem;
+	letter-spacing: -0.02em;
+	white-space: nowrap;
+	box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.5);
+}
+
+.grc-tag small {
+	margin-left: 4px;
+	font-family: var(--text);
+	font-weight: 500;
+	font-size: 0.72rem;
+	letter-spacing: 0;
+	color: var(--ink-soft);
+}
+
+/* На выбранном кадре бирка не должна налезать на уголок видоискателя */
+.grc-frame.is-selected .grc-tag { bottom: 46px; right: 20px; }
+
+/* ---------- Сетка: шаги слева, квитанция справа ---------- */
+.grc-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+	gap: clamp(24px, 4vw, 64px);
+	align-items: start;
+}
+
+.grc-main { display: grid; gap: clamp(40px, 5vw, 64px); min-width: 0; }
+
+.grc-step { min-width: 0; }
+
+.grc .grc-h2 {
+	display: flex;
+	align-items: baseline;
+	gap: 14px;
+	margin: 0 0 14px;
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: clamp(1.4rem, 2vw, 1.9rem);
+	line-height: 1.1;
+	letter-spacing: -0.025em;
+	color: var(--ink);
+}
+
+.grc-num {
+	font-size: 1.6em;
+	line-height: 0.8;
+	color: var(--gold-deep);
+}
+
+.grc-note {
+	max-width: 42em;
+	margin-bottom: 16px !important;
+	font-size: 0.94rem;
+	color: var(--ink-soft);
+}
+
+/* ---------- Поля ---------- */
+.grc-field { display: grid; gap: 6px; margin: 0 0 16px; }
+
+.grc-field > span {
+	font-size: 0.76rem;
+	font-weight: 600;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--ink-soft);
+}
+
+.grc .grc-field input,
+.grc .grc-field textarea {
+	width: 100%;
+	min-height: 48px;
+	padding: 10px 2px;
+	border: 0;
+	border-bottom: 1.5px solid var(--ink);
+	border-radius: 0;
+	background: transparent;
+	color: var(--ink);
+	font: 500 1rem/1.4 var(--text);
+	font-variant-numeric: tabular-nums;
+	accent-color: var(--ink);
+	box-shadow: none;
+	transition: background-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.grc .grc-field textarea { min-height: 96px; resize: vertical; }
+.grc .grc-field input:hover,
+.grc .grc-field textarea:hover { background: rgba(18, 19, 21, 0.03); }
+.grc .grc-field input:focus,
+.grc .grc-field textarea:focus { outline: none; box-shadow: inset 0 -2px 0 var(--gold); }
+.grc .grc-field input::placeholder,
+.grc .grc-field textarea::placeholder { color: #8a8d93; }
+
+.grc-field-small input { max-width: 180px; }
+
+.grc-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0 24px;
+}
+
+.gr-date-hint { font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+/* ---------- 1. Даты — как на главной: две даты, без лишнего ---------- */
+.grc-slate { max-width: 560px; }
+
+.grc-slate-fields {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+}
+
+.grc-slate .grc-field { margin-bottom: 10px; gap: 4px; }
+
+.grc-slate .grc-field > span {
+	font-size: 0.86rem;
+	font-weight: 500;
+	letter-spacing: 0;
+	text-transform: none;
+}
+
+.grc .grc-slate .grc-field input {
+	min-height: 52px;
+	padding: 0 14px;
+	border: 1.5px solid var(--line);
+	border-radius: 10px;
+	background: #fff;
+}
+
+.grc .grc-slate .grc-field input:hover { border-color: rgba(18, 19, 21, 0.45); background: #fff; }
+.grc .grc-slate .grc-field input:focus { border-color: var(--ink); box-shadow: none; }
+
+.grc-slate .grc-note { margin-bottom: 0 !important; }
+
+/* ---------- 2. Кадры цветов ---------- */
+.grc-frames {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 14px;
+	align-items: start;
+}
+
+.grc-frame {
+	background: var(--film);
+	border-radius: 3px;
+	padding: 10px 10px 0;
+	transition: box-shadow 0.3s var(--ease);
+}
+
+.grc-frame.is-selected { box-shadow: 0 0 0 2px var(--gold); }
+
+.grc .grc-frame-btn {
+	display: block;
+	width: 100%;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	color: #fff;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.grc .grc-frame-btn:hover,
+.grc .grc-frame-btn:focus { background: transparent; color: #fff; }
+
+.grc-photo {
+	position: relative;
+	display: block;
+	aspect-ratio: 3 / 4;
+	overflow: hidden;
+	border-radius: 2px;
+	background: #b6babd;
+}
+
+.grc-photo img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: top center;
+	transition: transform 0.7s var(--ease), filter 0.4s var(--ease);
+}
+
+.grc-photo .gr-gown-svg { width: 60%; margin: 20% auto 0; }
+
+.grc-frame-btn:hover .grc-photo img { transform: scale(1.03); }
+
+/* Видоискатель появляется на выбранном кадре */
+.grc-corner {
+	position: absolute;
+	width: 26px;
+	height: 26px;
+	border: 0 solid #fff;
+	opacity: 0;
+	transform: scale(1.25);
+	transition: opacity 0.3s var(--ease), transform 0.4s var(--ease);
+	filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+.grc-corner-tl { top: 12px; left: 12px; border-top-width: 2px; border-left-width: 2px; }
+.grc-corner-tr { top: 12px; right: 12px; border-top-width: 2px; border-right-width: 2px; }
+.grc-corner-bl { bottom: 12px; left: 12px; border-bottom-width: 2px; border-left-width: 2px; }
+.grc-corner-br { bottom: 12px; right: 12px; border-bottom-width: 2px; border-right-width: 2px; }
+
+.grc-frame.is-selected .grc-corner { opacity: 1; transform: none; }
+
+/* Край плёнки: номер кадра · цвет · выбрать */
+.grc-edge {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 46px;
+	padding: 8px 2px;
+	font-size: 0.78rem;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	font-variant-numeric: tabular-nums;
+}
+
+.grc-edge-num { color: var(--film-edge); }
+.grc-edge-name { color: #fff; }
+
+.grc-edge-pick {
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 10px;
+	border: 1px solid rgba(255, 255, 255, 0.45);
+	border-radius: 999px;
+	font-size: 0.72rem;
+	letter-spacing: 0.08em;
+	color: #fff;
+	transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.grc-frame-btn:hover .grc-edge-pick { border-color: #fff; }
+.grc-pick-on { display: none; align-items: center; gap: 4px; }
+.grc-frame.is-selected .grc-pick-off { display: none; }
+.grc-frame.is-selected .grc-pick-on { display: inline-flex; }
+.grc-frame.is-selected .grc-edge-pick { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+
+/* Размеры — на белой полосе под кадром */
+.grc-sizes {
+	display: grid;
+	gap: 2px;
+	margin: 0 -10px;
+	padding: 8px 12px 12px;
+	background: var(--paper);
+	border-radius: 0 0 3px 3px;
+}
+
+.grc-size {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	align-items: center;
+	gap: 4px 10px;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.grc-size:last-of-type { border-bottom: 0; }
+
+.grc .grc-size-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	color: var(--ink);
+	font: 600 0.98rem/1.2 var(--text);
+	text-align: left;
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.grc .grc-size-btn:hover,
+.grc .grc-size-btn:focus { background: transparent; color: var(--ink); }
+
+.grc-size-box {
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	border: 1.5px solid var(--ink);
+	border-radius: 3px;
+	color: transparent;
+	flex: none;
+	transition: background-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.grc-size-btn[aria-pressed="true"] .grc-size-box { background: var(--ink); color: var(--gold); }
+
+.grc .grc-size-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.grc-free {
+	font-size: 0.8rem;
+	color: var(--ink-soft);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.gr-size.is-out .grc-free,
+.gr-size.is-short .grc-free { color: var(--err); }
+
+.grc-qty {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding-left: 32px;
+}
+
+.grc .grc-qty button {
+	display: grid;
+	place-items: center;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border: 1.5px solid var(--ink);
+	border-radius: 50%;
+	background: var(--paper);
+	color: var(--ink);
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.grc .grc-qty button:hover { background: var(--ink); color: #fff; }
+
+.grc .grc-qty .gr-qty-input {
+	width: 64px;
+	min-height: 36px;
+	padding: 4px;
+	border: 0;
+	border-bottom: 1.5px solid var(--ink);
+	border-radius: 0;
+	background: transparent;
+	text-align: center;
+	font: 600 1rem/1 var(--text);
+	font-variant-numeric: tabular-nums;
+	box-shadow: none;
+}
+
+.gr-size.is-short .gr-qty-input { border-bottom-color: var(--err); color: var(--err); }
+
+.grc-missing {
+	padding-top: 6px;
+	font-size: 0.8rem;
+	color: var(--ink-soft);
+}
+
+/* ---------- 3. Получение: самовывоз или доставка ---------- */
+.grc-options { display: grid; gap: 10px; }
+
+.grc-option {
+	border: 1.5px solid var(--line);
+	border-radius: 2px;
+	background: var(--paper);
+	transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.grc-option:hover { border-color: rgba(18, 19, 21, 0.4); }
+
+.grc-option:has(input:checked) { border-color: var(--ink); }
+
+.grc-radio {
+	position: relative;
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: 14px;
+	min-height: 60px;
+	margin: 0;
+	padding: 0 18px;
+	cursor: pointer;
+}
+
+/* Настоящая радиокнопка остаётся для клавиатуры и экранных дикторов, но не видна */
+.grc .grc-radio input {
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+}
+
+.grc-radio-dot {
+	display: grid;
+	place-items: center;
+	width: 24px;
+	height: 24px;
+	border: 1.5px solid var(--ink);
+	border-radius: 50%;
+	background: var(--paper);
+	transition: border-color 0.2s var(--ease);
+}
+
+.grc-radio-dot::after {
+	content: "";
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: var(--gold);
+	box-shadow: 0 0 0 1.5px var(--ink);
+	transform: scale(0);
+	transition: transform 0.25s var(--ease);
+}
+
+.grc-radio input:checked + .grc-radio-dot::after { transform: scale(1); }
+.grc-radio input:focus-visible + .grc-radio-dot { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+.grc-radio-title {
+	font-family: var(--display);
+	font-weight: 500;
+	font-size: 1.05rem;
+	letter-spacing: -0.01em;
+}
+
+.grc-radio-price {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	color: var(--ink-soft);
+	white-space: nowrap;
+}
+
+.grc-option:has(input:checked) .grc-radio-price { color: var(--ink); }
+
+.grc-option-fields {
+	padding: 4px 18px 18px 56px;
+	border-top: 1px dashed var(--line);
+	padding-top: 16px;
+}
+
+.grc-option-fields .grc-note { margin-bottom: 12px !important; }
+
+/* Адрес самовывоза */
+.grc .grc-place {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	margin-bottom: 10px;
+	line-height: 1.4;
+}
+
+.grc-place svg { flex: none; margin-top: 1px; color: var(--gold-deep); }
+.grc-place strong { display: block; font-weight: 600; }
+
+.grc-place-hours {
+	display: block;
+	margin-top: 2px;
+	font-size: 0.88rem;
+	color: var(--ink-soft);
+}
+
+.grc .grc-map-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 40px;
+	margin: 0 0 12px 30px;
+	padding: 0 16px;
+	border: 1.5px solid var(--ink);
+	border-radius: 999px;
+	color: var(--ink);
+	font-weight: 600;
+	font-size: 0.92rem;
+	text-decoration: none;
+	transition: background-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.grc .grc-map-link:hover { background: var(--ink); color: #fff; }
+
+.gr-fee { font-weight: 600; }
+
+/* ---------- Квитанция заказа ---------- */
+.grc-aside {
+	position: sticky;
+	top: 24px;
+	display: grid;
+	gap: 12px;
+}
+
+.admin-bar .grc-aside { top: 56px; }
+
+.grc-receipt {
+	position: relative;
+	padding: 26px 22px 20px;
+	background: var(--paper);
+	border-radius: 2px;
+	box-shadow: 0 24px 50px -30px rgba(18, 19, 21, 0.55), 0 0 0 1px var(--line);
+}
+
+.grc-receipt::before {
+	content: "";
+	position: absolute;
+	left: 22px;
+	right: 22px;
+	top: 0;
+	height: 6px;
+	background: var(--gold);
+	border-radius: 0 0 4px 4px;
+}
+
+.grc .grc-receipt-title {
+	margin: 0 0 12px;
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: 1.25rem;
+	letter-spacing: -0.02em;
+	color: var(--ink);
+}
+
+.grc-receipt .gr-muted { color: var(--ink-soft); font-size: 0.92rem; margin: 4px 0 !important; }
+
+.grc .gr-lines { list-style: none; margin: 0 0 12px; padding: 0; }
+
+.grc .gr-lines li {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 2px 12px;
+	margin: 0;
+	padding: 9px 0;
+	border-bottom: 1px dashed var(--line);
+	font-size: 0.94rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.grc .gr-lines em { flex-basis: 100%; font-style: normal; font-size: 0.84rem; }
+
+.grc .gr-totals { margin: 0; font-variant-numeric: tabular-nums; }
+
+.grc .gr-totals div {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 5px 0;
+	font-size: 0.94rem;
+}
+
+.grc .gr-totals dt,
+.grc .gr-totals dd { margin: 0; }
+
+.grc .gr-totals div:last-child {
+	margin-top: 8px;
+	padding-top: 12px;
+	border-top: 1.5px solid var(--ink);
+	font-size: 1.15rem;
+}
+
+.grc .gr-totals div:last-child dd strong {
+	font-family: var(--display);
+	font-weight: 700;
+}
+
+.gr-error-text { color: var(--err); }
+
+.gr-errors ul {
+	margin: 0;
+	padding: 12px 14px 12px 32px;
+	border-radius: 2px;
+	background: var(--err-bg);
+	color: var(--err);
+	font-size: 0.92rem;
+}
+
+.grc .grc-submit,
+.grc .gr-again {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 56px;
+	padding: 0 1.5em;
+	border: 1.5px solid var(--gold);
+	border-radius: 999px;
+	background: var(--gold);
+	color: var(--ink);
+	font: 600 1.05rem/1 var(--text);
+	cursor: pointer;
+	box-shadow: none;
+	transition: background-color 0.25s var(--ease), box-shadow 0.25s var(--ease), transform 0.25s var(--ease);
+}
+
+.grc .grc-submit:hover:not(:disabled),
+.grc .gr-again:hover {
+	background: #e3c372;
+	border-color: #e3c372;
+	color: var(--ink);
+	box-shadow: 0 8px 24px -10px rgba(143, 109, 34, 0.7);
+	transform: translateY(-1px);
+}
+
+.grc .grc-submit:disabled {
+	background: #e7e5df;
+	border-color: #e7e5df;
+	color: #77787c;
+	cursor: not-allowed;
+}
+
+.grc .gr-hint {
+	text-align: center;
+	color: var(--ink-soft);
+	font-size: 0.86rem;
+}
+
+/* Ловушка для ботов — спрятана от людей */
+.gr-hp {
+	position: absolute;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+.gr-noscript {
+	padding: 12px;
+	background: var(--err-bg);
+	color: var(--err);
+}
+
+/* ---------- Успех ---------- */
+.grc-success {
+	max-width: 640px;
+	margin: 0 auto;
+	padding: 40px 28px 32px;
+	background: var(--paper);
+	border: 1.5px solid var(--ink);
+	border-radius: 2px;
+	text-align: center;
+}
+
+.grc .grc-success h2 {
+	margin: 0 0 12px;
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: clamp(1.6rem, 3vw, 2.4rem);
+	letter-spacing: -0.03em;
+	color: var(--ink);
+}
+
+.grc-success .gr-success-text { margin-bottom: 24px; color: var(--ink-soft); }
+
+/* ---------- Шапка темы и страница (как на главной) ---------- */
+.gr-landing-page .site-header,
+.gr-landing-page #masthead,
+.gr-landing-page .site-main-header-wrap .site-header-row-container-inner { background: #fafaf8; }
+
+.gr-catalog-page,
+.gr-catalog-page #wrapper,
+.gr-catalog-page .site,
+.gr-catalog-page .content-bg,
+.gr-catalog-page .entry.single-entry { background: #fafaf8; }
+
+.gr-catalog-page .content-area { margin-top: 0; margin-bottom: 0; }
+.gr-catalog-page .entry-content-wrap { padding: 0; }
+.gr-catalog-page .entry.single-entry { box-shadow: none; }
+
+/* ---------- Планшет ---------- */
+@media (max-width: 1100px) {
+	.grc-frames { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+	.grc-head { grid-template-columns: 1fr; }
+	.grc-layout { grid-template-columns: minmax(0, 1fr); }
+	.grc-aside { position: static; }
+}
+
+/* ---------- Телефон ---------- */
+@media (max-width: 600px) {
+	.grc-frames { gap: 10px; }
+	.grc-frame { padding: 6px 6px 0; }
+	/* Выбранный цвет раскрывается на всю ширину, чтобы размерам хватало места */
+	.grc-frame.is-selected { grid-column: 1 / -1; }
+	.grc-frame.is-selected .grc-photo { aspect-ratio: 4 / 3; }
+	.grc-sizes { margin: 0 -6px; }
+	.grc-edge { flex-wrap: wrap; gap: 4px 8px; font-size: 0.7rem; letter-spacing: 0.06em; }
+	.grc-edge-pick { margin-left: 0; }
+	.grc-slate-fields,
+	.grc-row { grid-template-columns: 1fr; }
+	.grc-slate-fields { grid-template-columns: 1fr 1fr; gap: 10px; }
+	.grc .grc-slate .grc-field input { padding: 0 10px; }
+	.grc-radio { padding: 0 14px; gap: 12px; }
+	.grc-option-fields { padding: 14px 14px 16px 14px; }
+	.grc .grc-map-link { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.grc *, .grc *::before, .grc *::after {
+		animation: none !important;
+		transition: none !important;
+	}
+}
+
+/* Длинное название сайта в шапке на телефоне — помельче, чтобы влезло в одну строку */
+@media (max-width: 600px) {
+	.gr-landing-page .site-branding .site-title { font-size: 1.15rem; white-space: nowrap; }
+}
+
+/* Подвал темы — тот же светлый фон, что у страниц */
+.gr-landing-page .site-footer,
+.gr-landing-page .site-footer-wrap,
+.gr-landing-page .site-footer .site-footer-row-container-inner { background: #fafaf8; }

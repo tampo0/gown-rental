@@ -1,0 +1,650 @@
+/* «Условия аренды» и «Контакты» — тот же мир, что главная и каталог. */
+
+.grp {
+	--sweep: #fafaf8;
+	--paper: #ffffff;
+	--ink: #121315;
+	--ink-soft: #4a4d53;
+	--gold: #d6b25e;
+	--gold-deep: #8f6d22;
+	--line: rgba(18, 19, 21, 0.16);
+	--display: "Unbounded", "Golos Text", sans-serif;
+	--text: "Golos Text", system-ui, sans-serif;
+	--gutter: clamp(16px, 4vw, 56px);
+	--ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+	max-width: 1520px;
+	margin: 0 auto;
+	padding: clamp(24px, 4vw, 56px) var(--gutter) clamp(64px, 9vw, 120px);
+	font-family: var(--text);
+	font-size: 1.0625rem;
+	line-height: 1.6;
+	color: var(--ink);
+	-webkit-font-smoothing: antialiased;
+}
+
+.grp *, .grp *::before, .grp *::after { box-sizing: border-box; }
+.grp ::selection { background: var(--gold); color: var(--ink); }
+.grp p { margin: 0; }
+
+.grp a:focus-visible,
+.grp button:focus-visible,
+.grp input:focus-visible,
+.grp textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+/* ---------- Заголовок страницы ---------- */
+.grp-head {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+	gap: 16px 48px;
+	align-items: end;
+	margin-bottom: clamp(36px, 5vw, 72px);
+}
+
+.grp .grp-title {
+	margin: 0;
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: clamp(2.3rem, 5vw, 5rem);
+	line-height: 1.02;
+	letter-spacing: -0.035em;
+	color: var(--ink);
+	text-wrap: balance;
+}
+
+.grp-lead {
+	max-width: 32em;
+	font-size: clamp(1rem, 1.2vw, 1.15rem);
+	color: var(--ink-soft);
+}
+
+.grp .grp-h2 {
+	margin: 0 0 16px;
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: clamp(1.4rem, 2vw, 1.9rem);
+	line-height: 1.1;
+	letter-spacing: -0.025em;
+	color: var(--ink);
+	text-wrap: balance;
+}
+
+.grp-text { max-width: 38em; color: var(--ink-soft); }
+.grp-text strong { color: var(--ink); font-weight: 600; }
+
+.grp a { color: var(--ink); text-decoration-color: var(--gold); text-underline-offset: 4px; text-decoration-thickness: 2px; }
+
+/* ---------- Кнопки ---------- */
+.grp .grp-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.6em;
+	min-height: 52px;
+	padding: 0 1.5em;
+	border: 1.5px solid var(--ink);
+	border-radius: 999px;
+	font: 600 1rem/1.1 var(--text);
+	text-decoration: none;
+	transition: background-color 0.25s var(--ease), color 0.25s var(--ease), box-shadow 0.25s var(--ease), transform 0.25s var(--ease);
+}
+
+.grp .grp-btn svg { transition: transform 0.3s var(--ease); }
+.grp .grp-btn:hover svg { transform: translateX(4px); }
+.grp .grp-btn-gold { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+.grp .grp-btn-gold:hover { background: #e3c372; border-color: #e3c372; color: var(--ink); box-shadow: 0 8px 24px -10px rgba(143, 109, 34, 0.7); transform: translateY(-1px); }
+.grp .grp-btn-line { background: transparent; color: var(--ink); }
+.grp .grp-btn-line:hover { background: var(--ink); color: #fff; }
+
+/* ---------- Условия: текст слева, квитанция штрафов справа ---------- */
+.grp-terms {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+	gap: clamp(32px, 6vw, 96px);
+	align-items: start;
+}
+
+.grp-terms-main { display: grid; gap: clamp(40px, 5vw, 64px); min-width: 0; }
+
+/* Шаги: номер имеет смысл — это порядок аренды */
+.grp ol.grp-steps { counter-reset: step; margin: 0; padding: 0; list-style: none; }
+
+.grp-steps li {
+	counter-increment: step;
+	display: grid;
+	grid-template-columns: 56px 1fr;
+	gap: 0 16px;
+	margin: 0;
+	padding: 20px 0;
+	border-top: 1px solid var(--line);
+}
+
+.grp-steps li:last-child { border-bottom: 1px solid var(--line); }
+
+.grp-steps li::before {
+	content: counter(step);
+	grid-row: span 2;
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: 2.4rem;
+	line-height: 1;
+	color: var(--gold-deep);
+}
+
+.grp .grp-steps h3 {
+	margin: 0 0 4px;
+	font-family: var(--display);
+	font-weight: 500;
+	font-size: 1.15rem;
+	letter-spacing: -0.01em;
+	color: var(--ink);
+}
+
+.grp-steps p { max-width: 38em; color: var(--ink-soft); }
+
+/* Квитанция */
+.grp-receipt {
+	position: sticky;
+	top: 24px;
+	padding: 28px 24px 24px;
+	background: var(--paper);
+	border-radius: 2px;
+	box-shadow: 0 24px 50px -30px rgba(18, 19, 21, 0.55), 0 0 0 1px var(--line);
+}
+
+.admin-bar .grp-receipt { top: 56px; }
+
+.grp-receipt::before {
+	content: "";
+	position: absolute;
+	left: 24px;
+	right: 24px;
+	top: 0;
+	height: 6px;
+	background: var(--gold);
+	border-radius: 0 0 4px 4px;
+}
+
+.grp .grp-receipt-title {
+	margin: 0 0 14px;
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: 1.4rem;
+	letter-spacing: -0.02em;
+	color: var(--ink);
+}
+
+.grp-receipt-sub {
+	margin-bottom: 4px !important;
+	font-size: 0.76rem;
+	font-weight: 600;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--ink-soft);
+}
+
+.grp ul.grp-lines { margin: 0 0 20px; padding: 0; list-style: none; }
+
+.grp-lines li {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 0;
+	padding: 11px 0;
+	border-bottom: 1px dashed var(--line);
+	font-variant-numeric: tabular-nums;
+}
+
+.grp-lines li span:last-child { font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
+
+.grp-late {
+	padding: 16px 16px 14px;
+	background: var(--ink);
+	color: #fff;
+	border-radius: 2px;
+}
+
+.grp-late .grp-receipt-sub { color: var(--gold); }
+
+.grp-late-sum {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 10px;
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: 2rem;
+	line-height: 1.1;
+	letter-spacing: -0.03em;
+}
+
+.grp-late-sum span {
+	font-family: var(--text);
+	font-weight: 500;
+	font-size: 0.92rem;
+	letter-spacing: 0;
+	color: rgba(255, 255, 255, 0.8);
+}
+
+.grp-nowrap { white-space: nowrap; }
+.grp-late-note { margin-top: 10px !important; font-size: 0.88rem; line-height: 1.5; color: rgba(255, 255, 255, 0.78); }
+
+/* Призыв внизу */
+.grp-cta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 20px 40px;
+	margin-top: clamp(56px, 7vw, 96px);
+	padding-top: 32px;
+	border-top: 1.5px solid var(--ink);
+}
+
+.grp-cta-text {
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: clamp(1.3rem, 2.2vw, 2rem);
+	line-height: 1.15;
+	letter-spacing: -0.025em;
+	max-width: 20em;
+}
+
+.grp-cta-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* ---------- Контакты ---------- */
+.grp-contacts {
+	display: grid;
+	grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+	gap: clamp(32px, 6vw, 96px);
+	align-items: start;
+}
+
+/* WhatsApp — обычная строка, но со своей иконкой */
+.grp-wa-icon {
+	display: block;
+	width: 44px;
+	height: 44px;
+	transition: transform 0.3s var(--ease);
+}
+
+.grp a.grp-contact-wa:hover .grp-wa-icon { transform: rotate(-6deg); }
+
+.grp-contact-list { display: grid; gap: 0; border-top: 1px solid var(--line); }
+
+.grp .grp-contact {
+	display: grid;
+	grid-template-columns: 44px 1fr;
+	gap: 16px;
+	align-items: start;
+	padding: 20px 4px;
+	border-bottom: 1px solid var(--line);
+	color: var(--ink);
+	text-decoration: none;
+	font-size: 1.15rem;
+	font-weight: 600;
+	line-height: 1.35;
+	transition: background-color 0.2s var(--ease);
+}
+
+.grp a.grp-contact:hover { background: rgba(18, 19, 21, 0.03); }
+
+.grp-contact > svg {
+	width: 44px;
+	height: 44px;
+	padding: 10px;
+	border: 1.5px solid var(--ink);
+	border-radius: 50%;
+	color: var(--ink);
+}
+
+.grp-contact small {
+	display: block;
+	margin-bottom: 2px;
+	font-size: 0.74rem;
+	font-weight: 600;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--ink-soft);
+}
+
+.grp .grp-contact-main { color: var(--ink); }
+.grp-contact-main > svg { background: var(--gold); border-color: var(--gold); }
+.grp a.grp-contact-main:hover > svg { background: #e3c372; }
+
+.grp-contact-static { font-size: 1.05rem; }
+
+.grp .grp-map {
+	display: flex;
+	width: max-content;
+	align-items: center;
+	gap: 6px;
+	margin-top: 10px;
+	min-height: 40px;
+	padding: 0 16px;
+	border: 1.5px solid var(--ink);
+	border-radius: 999px;
+	font-size: 0.92rem;
+	text-decoration: none;
+}
+
+.grp-map svg { width: 16px; height: 16px; }
+.grp .grp-map:hover { background: var(--ink); color: #fff; }
+
+.grp-hours { margin: 4px 0 6px; font-variant-numeric: tabular-nums; }
+.grp-hours div { display: grid; grid-template-columns: auto auto; justify-content: start; gap: 12px; }
+.grp-hours dt, .grp-hours dd { margin: 0; }
+.grp-hours dt { font-weight: 600; }
+.grp-hours dd { font-weight: 500; color: var(--ink-soft); }
+.grp-contact-static em { display: block; font-style: normal; font-weight: 500; font-size: 0.88rem; color: var(--gold-deep); }
+
+/* Форма — как хлопушка с датами */
+.grp-form {
+	max-width: 460px;
+	justify-self: end;
+	width: 100%;
+	padding: 0 20px 20px;
+	background: var(--paper);
+	border: 1.5px solid var(--ink);
+	border-radius: 2px;
+}
+
+.grp .grp-form-band {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 0 -20px 16px;
+	padding: 6px 20px;
+	background: var(--ink);
+	color: #fff;
+	font-size: 0.74rem;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.grp .grp-form-band span:last-child { color: var(--gold); }
+.grp-form .grp-h2 { font-size: 1.25rem; margin-bottom: 6px; }
+.grp-form .grp-text { margin-bottom: 14px; font-size: 0.92rem; }
+.grp .grp-form .wpcf7 form > p,
+.grp .grp-form .wpcf7 form label { margin-bottom: 12px; }
+.grp .grp-form .wpcf7 input[type="text"],
+.grp .grp-form .wpcf7 input[type="tel"],
+.grp .grp-form .wpcf7 input[type="email"] { min-height: 40px; padding: 6px 2px; }
+.grp .grp-form .wpcf7 textarea { height: 84px; min-height: 64px; }
+.grp .grp-form .wpcf7 input[type="submit"] { min-height: 46px; font-size: 1rem; }
+
+/* Contact Form 7 внутри */
+.grp .wpcf7 form > p,
+.grp .wpcf7 form label { margin: 0 0 18px; }
+
+.grp .wpcf7 label {
+	display: block;
+	font-size: 0.76rem;
+	font-weight: 600;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--ink-soft);
+}
+
+.grp .wpcf7 .wpcf7-form-control-wrap { display: block; margin-top: 6px; }
+
+.grp .wpcf7 input[type="text"],
+.grp .wpcf7 input[type="tel"],
+.grp .wpcf7 input[type="email"],
+.grp .wpcf7 textarea {
+	width: 100%;
+	min-height: 48px;
+	padding: 10px 2px;
+	border: 0;
+	border-bottom: 1.5px solid var(--ink);
+	border-radius: 0;
+	background: transparent;
+	color: var(--ink);
+	font: 500 1rem/1.4 var(--text);
+	letter-spacing: 0;
+	text-transform: none;
+	box-shadow: none;
+}
+
+.grp .wpcf7 textarea { height: 130px; min-height: 96px; resize: vertical; }
+
+.grp .wpcf7 input:focus,
+.grp .wpcf7 textarea:focus { outline: none; box-shadow: inset 0 -2px 0 var(--gold); }
+
+.grp .wpcf7 input[type="submit"] {
+	width: 100%;
+	min-height: 54px;
+	margin-top: 4px;
+	padding: 0 1.5em;
+	border: 1.5px solid var(--gold);
+	border-radius: 999px;
+	background: var(--gold);
+	color: var(--ink);
+	font: 600 1.05rem/1 var(--text);
+	letter-spacing: 0;
+	text-transform: none;
+	cursor: pointer;
+	box-shadow: none;
+	transition: background-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+
+.grp .wpcf7 input[type="submit"]:hover { background: #e3c372; border-color: #e3c372; box-shadow: 0 8px 24px -10px rgba(143, 109, 34, 0.7); }
+
+.grp .wpcf7-not-valid-tip { margin-top: 6px; font-size: 0.85rem; letter-spacing: 0; text-transform: none; color: #b42318; }
+
+.grp .wpcf7 form .wpcf7-response-output {
+	margin: 12px 0 0;
+	padding: 10px 14px;
+	border: 1.5px solid var(--ink);
+	border-radius: 2px;
+	font-size: 0.92rem;
+}
+
+.grp .wpcf7-spinner { margin: 10px auto 0; display: block; }
+
+/* ---------- Шапка темы и фон (как на главной и в каталоге) ---------- */
+.gr-landing-page .site-header,
+.gr-landing-page #masthead,
+.gr-landing-page .site-main-header-wrap .site-header-row-container-inner { background: #fafaf8; }
+
+.gr-studio-page,
+.gr-studio-page #wrapper,
+.gr-studio-page .site,
+.gr-studio-page .content-bg,
+.gr-studio-page .entry.single-entry { background: #fafaf8; }
+
+.gr-studio-page .content-area { margin-top: 0; margin-bottom: 0; }
+.gr-studio-page .entry-content-wrap { padding: 0; }
+.gr-studio-page .entry.single-entry { box-shadow: none; }
+
+/* ---------- Планшет и телефон ---------- */
+@media (max-width: 960px) {
+	.grp-head { grid-template-columns: 1fr; }
+	.grp-terms,
+	.grp-contacts { grid-template-columns: minmax(0, 1fr); }
+	.grp-receipt { position: relative; top: 0; max-width: 520px; }
+	.grp-form { justify-self: start; }
+}
+
+@media (max-width: 600px) {
+	.grp { font-size: 1rem; }
+	.grp-steps li { grid-template-columns: 44px 1fr; }
+	.grp-steps li::before { font-size: 2rem; }
+	.grp-form { padding: 0 16px 16px; max-width: none; }
+	.grp .grp-form-band { margin: 0 -16px 14px; padding: 6px 16px; flex-wrap: wrap; }
+	.grp .grp-contact { grid-template-columns: 40px 1fr; gap: 12px; font-size: 1.05rem; }
+	.grp-contact > svg { width: 40px; height: 40px; padding: 9px; }
+	.grp-cta-actions .grp-btn { width: 100%; }
+	.grp-wa-icon { width: 40px; height: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.grp *, .grp *::before, .grp *::after { transition: none !important; animation: none !important; }
+}
+
+/* Длинное название сайта в шапке на телефоне — помельче, чтобы влезло в одну строку */
+@media (max-width: 600px) {
+	.gr-landing-page .site-branding .site-title { font-size: 1.15rem; white-space: nowrap; }
+}
+
+/* ---------- «Нам доверяют» ---------- */
+.grt-hero {
+	display: grid;
+	grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+	gap: 24px clamp(32px, 6vw, 96px);
+	align-items: end;
+	margin-bottom: clamp(40px, 6vw, 80px);
+}
+
+.grt-total-num {
+	display: flex;
+	align-items: flex-end;
+	gap: 18px;
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: clamp(3.4rem, 7vw, 6.4rem);
+	line-height: 0.85;
+	letter-spacing: -0.05em;
+	color: var(--ink);
+	font-variant-numeric: tabular-nums;
+}
+
+.grt-total-num span {
+	max-width: 14em;
+	padding-bottom: 4px;
+	font-family: var(--text);
+	font-weight: 600;
+	font-size: 0.95rem;
+	line-height: 1.35;
+	letter-spacing: 0;
+	color: var(--ink-soft);
+}
+
+/* Полоса долей: 1 450 мантий, разделённые по вузам */
+.grt-bar {
+	display: flex;
+	gap: 3px;
+	height: 14px;
+	margin-top: 22px;
+}
+
+.grt-bar span { display: block; min-width: 6px; border-radius: 2px; }
+
+.grp ul.grt-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 22px;
+	margin: 12px 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: 0.88rem;
+	color: var(--ink-soft);
+}
+
+.grt-legend li { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
+.grt-legend i { width: 10px; height: 10px; border-radius: 2px; }
+.grt-legend b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Доска почёта */
+.grp ol.grt-roll { margin: 0; padding: 0; list-style: none; border-top: 1.5px solid var(--ink); }
+
+.grt-row {
+	display: grid;
+	grid-template-columns: 240px minmax(0, 1fr) auto;
+	gap: 16px clamp(24px, 4vw, 64px);
+	align-items: center;
+	margin: 0;
+	padding: 26px 0;
+	border-bottom: 1px solid var(--line);
+	transition: background-color 0.25s var(--ease);
+}
+
+.grt-row:last-child { border-bottom: 1.5px solid var(--ink); }
+.grt-row:hover { background: rgba(18, 19, 21, 0.025); }
+
+.grt-row-logo { display: flex; align-items: center; height: 72px; padding-left: 4px; }
+.grt-row-logo img { display: block; max-height: 100%; max-width: 100%; width: auto; height: auto; object-fit: contain; }
+.grt-row.is-featured { padding: 34px 0; }
+.grt-row.is-featured .grt-row-logo { height: 104px; }
+
+.grp .grt-row-name h2 {
+	margin: 0 0 6px;
+	font-family: var(--display);
+	font-weight: 500;
+	font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+	line-height: 1.25;
+	letter-spacing: -0.015em;
+	color: var(--ink);
+	text-wrap: balance;
+}
+
+.grt-row-name p {
+	font-size: 0.76rem;
+	font-weight: 600;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--ink-soft);
+}
+
+.grt-row-count {
+	display: grid;
+	justify-items: end;
+	padding-right: 4px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ink-soft);
+}
+
+.grt-row-count span {
+	font-family: var(--display);
+	font-weight: 700;
+	font-size: clamp(2.2rem, 4vw, 3.4rem);
+	line-height: 1;
+	letter-spacing: -0.045em;
+	text-transform: none;
+	color: var(--gold-deep);
+	font-variant-numeric: tabular-nums;
+}
+
+.grt-row.is-featured .grt-row-count span { font-size: clamp(2.6rem, 5vw, 4.4rem); }
+
+/* Фото выпускниц */
+.grp figure.grt-photo { margin: clamp(48px, 6vw, 88px) 0 0; }
+.grt-photo img { display: block; width: 100%; height: auto; border-radius: 2px; }
+
+.grt-b2b {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 24px 48px;
+	align-items: end;
+	margin-top: clamp(40px, 5vw, 72px);
+}
+
+@media (max-width: 960px) {
+	.grt-hero { grid-template-columns: 1fr; }
+	.grt-row { grid-template-columns: 160px minmax(0, 1fr) auto; }
+	.grt-b2b { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+	.grt-total-num { flex-direction: column; align-items: flex-start; gap: 10px; }
+	.grt-row,
+	.grt-row.is-featured {
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-areas: "logo count" "name name";
+		padding: 22px 0;
+	}
+	.grt-row-logo { grid-area: logo; height: 56px; }
+	.grt-row.is-featured .grt-row-logo { height: 72px; }
+	.grt-row-logo img { max-width: 200px; }
+	.grt-row-name { grid-area: name; }
+	.grt-row-count { grid-area: count; }
+}
+
+/* Подвал темы — тот же светлый фон, что у страниц */
+.gr-landing-page .site-footer,
+.gr-landing-page .site-footer-wrap,
+.gr-landing-page .site-footer .site-footer-row-container-inner { background: #fafaf8; }
