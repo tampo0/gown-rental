@@ -150,6 +150,11 @@ function gr_ajax_submit_booking() {
 		wp_send_json_error( array( 'errors' => array( $date_error ) ) );
 	}
 
+	// Закон РК «О персональных данных и их защите»: нужно согласие клиента.
+	if ( empty( $_POST['consent'] ) ) {
+		wp_send_json_error( array( 'errors' => array( 'Подтвердите согласие на обработку персональных данных.' ) ) );
+	}
+
 	// Статус и источник задаёт сервер, а не браузер.
 	$input           = wp_unslash( $_POST );
 	$input['status'] = 'new';

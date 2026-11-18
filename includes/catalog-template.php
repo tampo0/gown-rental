@@ -214,6 +214,10 @@ function gr_catalog_shortcode() {
 					<div class="gr-summary-body"><p class="gr-muted">Выберите даты и мантии.</p></div>
 				</div>
 				<div class="gr-errors" role="alert"></div>
+				<label class="grc-consent">
+					<input type="checkbox" name="consent" value="1" required>
+					<span>Согласен на обработку персональных данных по <a href="<?php echo esc_url( get_privacy_policy_url() ); ?>" target="_blank" rel="noopener">политике конфиденциальности</a></span>
+				</label>
 				<button type="submit" class="gr-submit grc-submit" disabled>Забронировать</button>
 				<p class="gr-hint">Оплата после брони, мы напишем вам в WhatsApp.</p>
 			</aside>

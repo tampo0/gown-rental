@@ -648,3 +648,34 @@
 .gr-landing-page .site-footer,
 .gr-landing-page .site-footer-wrap,
 .gr-landing-page .site-footer .site-footer-row-container-inner { background: #fafaf8; }
+
+/* ---------- Политика конфиденциальности ---------- */
+.grp-doc { display: grid; gap: clamp(28px, 4vw, 44px); max-width: 760px; }
+.grp-doc .grp-h2 { font-size: clamp(1.15rem, 1.6vw, 1.4rem); margin-bottom: 10px; }
+.grp-doc .grp-text + .grp-text { margin-top: 10px; }
+.grp ul.grp-list { margin: 0 0 10px; padding: 0; list-style: none; color: var(--ink-soft); }
+.grp-list li { position: relative; margin: 0 0 6px; padding-left: 20px; }
+.grp-list li::before { content: ""; position: absolute; left: 2px; top: 0.7em; width: 8px; height: 2px; background: var(--gold-deep); }
+
+/* Галочка согласия в форме Contact Form 7 */
+.grp .wpcf7 .wpcf7-acceptance { display: block; margin: 4px 0 16px; }
+.grp .wpcf7 .wpcf7-acceptance .wpcf7-list-item { margin: 0; }
+.grp .wpcf7 .wpcf7-acceptance label {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 10px;
+	align-items: start;
+	font-size: 0.86rem;
+	font-weight: 400;
+	letter-spacing: 0;
+	text-transform: none;
+	line-height: 1.45;
+	cursor: pointer;
+}
+.grp .wpcf7 .wpcf7-acceptance input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--ink); }
+.grp .wpcf7 .wpcf7-acceptance a { color: var(--ink); text-decoration-color: var(--gold); text-underline-offset: 3px; }
+
+.grp-privacy .grp-head { grid-template-columns: 1fr; gap: 12px; }
+.grp-privacy .grp-title { font-size: clamp(1.9rem, 4.6vw, 4.2rem); overflow-wrap: normal; word-break: keep-all; }
+@media (max-width: 600px) { .grp-privacy .grp-title { font-size: 1.4rem; } }
+.gr-landing-page .site-footer a { color: inherit; text-decoration: underline; text-decoration-color: #d6b25e; text-underline-offset: 3px; }

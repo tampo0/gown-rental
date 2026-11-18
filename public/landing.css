@@ -858,3 +858,4 @@
 .gr-landing-page .site-footer,
 .gr-landing-page .site-footer-wrap,
 .gr-landing-page .site-footer .site-footer-row-container-inner { background: #fafaf8; }
+.gr-landing-page .site-footer a { color: inherit; text-decoration: underline; text-decoration-color: #d6b25e; text-underline-offset: 3px; }

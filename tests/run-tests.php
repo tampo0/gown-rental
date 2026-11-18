@@ -216,6 +216,24 @@ try {
 	check( 'Нехватка помечена как «short» без количества', in_array( 'red|long', $res['data']['short'] ?? array(), true ) );
 	check( 'У фиолетового нет детского размера в ответе', ! isset( $res['data']['matrix']['purple']['kids'] ) );
 
+	section( '5б. Согласие на обработку персональных данных' );
+	$form = array(
+		'nonce'         => wp_create_nonce( 'gr_public' ),
+		'date_from'     => '2030-04-01',
+		'date_to'       => '2030-04-01',
+		'customer_name' => 'Автотест',
+		'phone'         => '+7 700 000 00 00',
+		'delivery'      => '0',
+		'items'         => wp_json_encode( $item( 1 ) ),
+	);
+	$res = call_ajax( 'gr_ajax_submit_booking', $form );
+	check( 'Без галочки согласия бронь с сайта не принимается', isset( $res['success'] ) && false === $res['success'] && false !== strpos( implode( ' ', $res['data']['errors'] ?? array() ), 'согласие' ) );
+	$res = call_ajax( 'gr_ajax_submit_booking', $form + array( 'consent' => '1' ) );
+	check( 'С галочкой — бронь принята', ! empty( $res['success'] ), wp_json_encode( $res ) );
+	if ( ! empty( $res['data']['id'] ) ) {
+		$GLOBALS['gr_created'][] = (int) $res['data']['id'];
+	}
+
 	section( '6. Смена статуса из списка броней (AJAX админки)' );
 	wp_set_current_user( 0 );
 	$res = call_ajax( 'gr_ajax_set_status', array( 'nonce' => wp_create_nonce( 'gr_admin' ), 'id' => $c, 'status' => 'confirmed' ) );

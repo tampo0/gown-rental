@@ -43,7 +43,7 @@ function gr_page_has( $tag ) {
 }
 
 function gr_pages_assets() {
-	if ( ! gr_page_has( 'gown_terms' ) && ! gr_page_has( 'gown_contacts' ) ) {
+	if ( ! gr_page_has( 'gown_terms' ) && ! gr_page_has( 'gown_contacts' ) && ! gr_page_has( 'gown_privacy' ) ) {
 		return;
 	}
 	wp_enqueue_style( 'gr-pages-fonts', 'https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap', array(), null );
@@ -52,7 +52,7 @@ function gr_pages_assets() {
 add_action( 'wp_enqueue_scripts', 'gr_pages_assets' );
 
 function gr_pages_body_class( $classes ) {
-	if ( gr_page_has( 'gown_terms' ) || gr_page_has( 'gown_contacts' ) ) {
+	if ( gr_page_has( 'gown_terms' ) || gr_page_has( 'gown_contacts' ) || gr_page_has( 'gown_privacy' ) ) {
 		$classes[] = 'gr-landing-page';
 		$classes[] = 'gr-studio-page';
 	}
@@ -229,3 +229,59 @@ function gr_contacts_shortcode() {
 	return ob_get_clean();
 }
 add_shortcode( 'gown_contacts', 'gr_contacts_shortcode' );
+
+/* -------------------------------------------------------------------------
+ * [gown_privacy] — Политика конфиденциальности
+ * ---------------------------------------------------------------------- */
+
+function gr_privacy_shortcode() {
+	$c    = gr_contacts();
+	$name = get_bloginfo( 'name' );
+
+	ob_start();
+	?>
+	<div class="grp grp-privacy">
+		<header class="grp-head">
+			<h1 class="grp-title">Политика конфиденциальности</h1>
+			<p class="grp-lead">Какие данные мы получаем через сайт, зачем они нужны и как их удалить.</p>
+		</header>
+
+		<div class="grp-doc">
+			<section>
+				<h2 class="grp-h2">Кто обрабатывает данные</h2>
+				<p class="grp-text">Прокат мантий «<?php echo esc_html( $name ); ?>», <?php echo esc_html( gr_pickup_address() ); ?>. Телефон и WhatsApp: <?php echo esc_html( $c['phone'] ); ?>, email: <?php echo esc_html( $c['email'] ); ?>.</p>
+			</section>
+
+			<section>
+				<h2 class="grp-h2">Какие данные мы получаем</h2>
+				<ul class="grp-list">
+					<li>При бронировании — имя, телефон, email (по желанию), адрес доставки, комментарий, выбранные мантии и даты.</li>
+					<li>Через форму «Напишите нам» — имя, телефон, email и текст сообщения.</li>
+				</ul>
+			</section>
+
+			<section>
+				<h2 class="grp-h2">Зачем</h2>
+				<ul class="grp-list">
+					<li>Чтобы подтвердить бронь, связаться с вами в WhatsApp или по телефону.</li>
+					<li>Чтобы доставить и забрать мантии по указанному адресу.</li>
+					<li>Чтобы ответить на ваш вопрос.</li>
+				</ul>
+				<p class="grp-text">Мы не используем данные для рассылок и не передаём их третьим лицам, кроме курьера, который везёт ваш заказ.</p>
+			</section>
+
+			<section>
+				<h2 class="grp-h2">Как храним</h2>
+				<p class="grp-text">Данные хранятся в базе сайта и доступны только администратору проката. Мы храним их, пока это нужно для выполнения брони и учёта возврата мантий.</p>
+			</section>
+
+			<section>
+				<h2 class="grp-h2">Ваши права</h2>
+				<p class="grp-text">Вы можете узнать, какие данные о вас есть, попросить исправить или удалить их — напишите нам в WhatsApp или на почту. Отправляя бронь или сообщение, вы даёте согласие на обработку данных в соответствии с Законом Республики Казахстан «О персональных данных и их защите».</p>
+			</section>
+		</div>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+add_shortcode( 'gown_privacy', 'gr_privacy_shortcode' );
