@@ -97,6 +97,9 @@ function gr_check_request( $nonce_action ) {
 function gr_register_settings() {
 	$int = array( 'type' => 'integer', 'sanitize_callback' => 'absint' );
 	register_setting( 'gr_settings', 'gr_free_delivery_from', $int );
+	register_setting( 'gr_settings', 'gr_kids_price', $int );
+	register_setting( 'gr_settings', 'gr_free_gown_from', $int );
+	register_setting( 'gr_settings', 'gr_price_tiers', array( 'type' => 'array', 'sanitize_callback' => 'gr_sanitize_price_tiers' ) );
 	register_setting( 'gr_settings', 'gr_contact_email', array( 'type' => 'string', 'sanitize_callback' => 'sanitize_email' ) );
 	$text = array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' );
 	register_setting( 'gr_settings', 'gr_pickup_address', $text );
@@ -108,6 +111,24 @@ function gr_register_settings() {
 }
 add_action( 'admin_init', 'gr_register_settings' );
 
+/** Строки «от N шт. — X ₸» из формы → [ N => X ]. Пустые строки отбрасываются, ступень «от 1» обязательна. */
+function gr_sanitize_price_tiers( $rows ) {
+	$tiers = array();
+	foreach ( (array) $rows as $row ) {
+		$from  = isset( $row['from'] ) ? absint( $row['from'] ) : 0;
+		$price = isset( $row['price'] ) ? absint( $row['price'] ) : 0;
+		if ( $from && '' !== ( $row['price'] ?? '' ) ) {
+			$tiers[ $from ] = $price;
+		}
+	}
+	if ( ! isset( $tiers[1] ) ) {
+		add_settings_error( 'gr_price_tiers', 'gr_no_tier_1', 'Нужна цена «от 1 шт.» — без неё цены не сохранены.' );
+		return gr_price_tiers();
+	}
+	ksort( $tiers );
+	return $tiers;
+}
+
 function gr_settings_page() {
 	$hex = gr_color_hex();
 	?>
@@ -115,6 +136,32 @@ function gr_settings_page() {
 		<h1>Настройки проката</h1>
 		<form method="post" action="options.php">
 			<?php settings_fields( 'gr_settings' ); ?>
+
+			<h2>Цены</h2>
+			<p class="description">Цена одной взрослой мантии зависит от количества мантий во всей брони (детские тоже считаются). Пустую строку можно удалить, очистив оба поля.</p>
+			<table class="form-table">
+				<?php
+				$tiers = array_values( array_map( null, array_keys( gr_price_tiers() ), gr_price_tiers() ) );
+				for ( $i = 0; $i < max( 5, count( $tiers ) + 1 ); $i++ ) :
+					$row = $tiers[ $i ] ?? array( '', '' );
+					?>
+					<tr>
+						<th><?php echo 0 === $i ? 'Взрослая мантия' : ''; ?></th>
+						<td>
+							от <input type="number" min="1" class="small-text" name="gr_price_tiers[<?php echo (int) $i; ?>][from]" value="<?php echo esc_attr( $row[0] ); ?>"> шт. —
+							<input type="number" min="0" step="100" class="regular-text" style="width:120px" name="gr_price_tiers[<?php echo (int) $i; ?>][price]" value="<?php echo esc_attr( $row[1] ); ?>"> ₸ за мантию
+						</td>
+					</tr>
+				<?php endfor; ?>
+				<tr>
+					<th><label for="gr_kids_price">Детская мантия</label></th>
+					<td><input type="number" min="0" step="100" id="gr_kids_price" name="gr_kids_price" value="<?php echo esc_attr( gr_kids_price() ); ?>" class="regular-text" style="width:120px"> ₸ при любом количестве</td>
+				</tr>
+				<tr>
+					<th><label for="gr_free_gown_from">Одна бесплатно от</label></th>
+					<td><input type="number" min="1" id="gr_free_gown_from" name="gr_free_gown_from" value="<?php echo esc_attr( gr_free_gown_from() ); ?>" class="small-text"> мантий в брони (для организатора)</td>
+				</tr>
+			</table>
 
 			<h2>Почта и доставка</h2>
 			<table class="form-table">
@@ -131,7 +178,7 @@ function gr_settings_page() {
 						value="<?php echo esc_attr( gr_free_delivery_from() ); ?>" class="small-text"> мантий. Меньше — только самовывоз.</td>
 				</tr>
 			</table>
-			<p class="description">Цены за мантию (1–2 шт. — 5 000 ₸ … от 10 шт. — 2 000 ₸) задаются в коде: <code>gr_price_tiers()</code> в includes/config.php.</p>
+
 
 			<h2>Самовывоз</h2>
 			<p class="description">Показывается в каталоге, когда клиент выбирает самовывоз.</p>

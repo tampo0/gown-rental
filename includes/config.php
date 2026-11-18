@@ -92,16 +92,25 @@ function gr_label( $list, $key ) {
  * ---------------------------------------------------------------------- */
 
 /**
- * Цена одной мантии за аренду в зависимости от количества в брони:
- * [ от скольки мантий => цена ]. Вся бронь идёт по одной цене.
+ * Цена одной взрослой мантии за аренду в зависимости от количества в брони:
+ * [ от скольки мантий => цена ]. Меняется в «Прокат мантий → Настройки».
  */
+function gr_default_price_tiers() {
+	return array( 1 => 5000, 3 => 3000, 5 => 2500, 10 => 2000 );
+}
+
 function gr_price_tiers() {
-	return array(
-		1  => 5000,
-		3  => 3000,
-		5  => 2500,
-		10 => 2000,
-	);
+	$tiers = get_option( 'gr_price_tiers' );
+	if ( ! is_array( $tiers ) || ! $tiers ) {
+		return gr_default_price_tiers();
+	}
+	ksort( $tiers );
+	return $tiers;
+}
+
+/** Детская мантия — одна цена при любом количестве (но считается в общее количество). */
+function gr_kids_price() {
+	return (int) get_option( 'gr_kids_price', 2000 );
 }
 
 /** Цена одной мантии при таком количестве в брони. */
@@ -117,7 +126,7 @@ function gr_unit_price( $qty ) {
 
 /** От скольки мантий одна — бесплатно для организатора. */
 function gr_free_gown_from() {
-	return 20;
+	return (int) get_option( 'gr_free_gown_from', 20 );
 }
 
 /** Длительность аренды в Шымкенте (часы) и время, когда можно начать. */
@@ -125,8 +134,19 @@ function gr_rental_hours() {
 	return 3;
 }
 
+/** Начало аренды: с 9:30 до 15:00 каждые 30 минут — вернуть нужно до 18:00. */
 function gr_start_times() {
-	return array( '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00' );
+	$times = array();
+	for ( $t = strtotime( '09:30 UTC', 0 ); $t <= strtotime( '15:00 UTC', 0 ); $t += 30 * MINUTE_IN_SECONDS ) {
+		$times[] = gmdate( 'H:i', $t );
+	}
+	return $times;
+}
+
+/** «9:30 – 15:00» для текстов. */
+function gr_start_window() {
+	$times = gr_start_times();
+	return ltrim( $times[0], '0' ) . ' до ' . end( $times );
 }
 
 /** Доставки нет — только самовывоз; доставка (бесплатно) возможна от этого количества. */
@@ -247,28 +267,53 @@ function gr_items_total_quantity( $items ) {
 }
 
 /**
- * Считает стоимость заказа: цена за аренду (не за сутки) по ступени количества,
- * от 20 мантий одна бесплатно. Доставка (от 100 шт.) бесплатная.
- * Параметры дат и доставки оставлены для совместимости вызовов.
+ * Считает стоимость заказа (за аренду, не за сутки):
+ * - взрослые мантии — по ступени ОБЩЕГО количества (детские тоже считаются);
+ * - детские — всегда по своей цене;
+ * - от N мантий одна бесплатно (вычитается взрослая, если есть, иначе детская).
+ * Доставка (от 100 шт.) бесплатная. Параметры дат и доставки — для совместимости вызовов.
  *
- * @return array quantity, unit_price, free_gowns, rental, delivery_fee, pickup_fee, total, free_delivery
+ * @return array quantity, kids, unit_price, kids_price, free_gowns, discount, rental, delivery_fee, pickup_fee, total, free_delivery
  */
 function gr_calc_totals( $items, $date_from = '', $date_to = '', $delivery = false, $pickup = false ) {
-	$qty   = gr_items_total_quantity( $items );
-	$unit  = gr_unit_price( $qty );
-	$freeN = $qty >= gr_free_gown_from() ? 1 : 0;
-	$rent  = $unit * ( $qty - $freeN );
+	$qty  = gr_items_total_quantity( $items );
+	$kids = 0;
+	foreach ( $items as $item ) {
+		$item  = (array) $item;
+		$kids += 'kids' === $item['size'] ? (int) $item['quantity'] : 0;
+	}
+	$unit     = gr_unit_price( $qty );
+	$kids_p   = gr_kids_price();
+	$freeN    = $qty >= gr_free_gown_from() ? 1 : 0;
+	$discount = $freeN ? ( $qty > $kids ? $unit : $kids_p ) : 0;
+	$rent     = $unit * ( $qty - $kids ) + $kids_p * $kids - $discount;
 
 	return array(
 		'quantity'      => $qty,
+		'kids'          => $kids,
 		'unit_price'    => $unit,
+		'kids_price'    => $kids_p,
 		'free_gowns'    => $freeN,
+		'discount'      => $discount,
 		'rental'        => $rent,
 		'delivery_fee'  => 0,
 		'pickup_fee'    => 0,
 		'total'         => $rent,
 		'free_delivery' => $qty >= gr_free_delivery_from(),
 	);
+}
+
+/** Строки цены для квитанции и писем: «12 × 2 000 ₸», «2 детских × 2 000 ₸». */
+function gr_price_lines( $totals ) {
+	$lines  = array();
+	$adults = $totals['quantity'] - $totals['kids'];
+	if ( $adults ) {
+		$lines[] = $adults . ' × ' . gr_money( $totals['unit_price'] );
+	}
+	if ( $totals['kids'] ) {
+		$lines[] = $totals['kids'] . ' детск. × ' . gr_money( $totals['kids_price'] );
+	}
+	return $lines;
 }
 
 /** Конец аренды: время начала + 3 часа («11:30» → «14:30»). */

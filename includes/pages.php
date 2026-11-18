@@ -90,11 +90,11 @@ function gr_terms_shortcode() {
 					<ol class="grp-steps">
 						<li>
 							<h3>Бронь</h3>
-							<p>Выберите в <a href="<?php echo esc_url( gr_catalog_url() ); ?>">каталоге</a> дату, время начала, цвета и размеры. Мы напишем вам в WhatsApp, чтобы подтвердить бронь.</p>
+							<p>Выберите в <a href="<?php echo esc_url( gr_catalog_url() ); ?>">каталоге</a> дату, время начала, цвета и размеры. После брони отправьте нам заявку в WhatsApp — она откроется сама. Без WhatsApp заказ не принимается.</p>
 						</li>
 						<li>
 							<h3>Оплата</h3>
-							<p>После подтверждения брони.</p>
+							<p>В WhatsApp, сразу после подтверждения брони.</p>
 						</li>
 						<li>
 							<h3>Получение</h3>
@@ -102,7 +102,7 @@ function gr_terms_shortcode() {
 						</li>
 						<li>
 							<h3>Аренда — <?php echo (int) gr_rental_hours(); ?> часа</h3>
-							<p>Начало — с 11:00 до 14:00, вернуть через <?php echo (int) gr_rental_hours(); ?> часа. Например, взяли в 11:30 — вернуть до 14:30.</p>
+							<p>Начало — с <?php echo esc_html( gr_start_window() ); ?>, вернуть через <?php echo (int) gr_rental_hours(); ?> часа. Например, взяли в 11:30 — вернуть до 14:30. Последнее время начала — 15:00, вернуть до 18:00.</p>
 						</li>
 					</ol>
 				</section>

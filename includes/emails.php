@@ -22,7 +22,7 @@ function gr_booking_summary( $booking ) {
 	$lines[] = gr_delivery_summary( $booking );
 	$lines[] = '';
 	$totals  = gr_calc_totals( $booking->items );
-	$lines[] = 'Цена: ' . $totals['quantity'] . ' × ' . gr_money( $totals['unit_price'] ) . ( $totals['free_gowns'] ? ' (одна для организатора бесплатно)' : '' );
+	$lines[] = 'Цена: ' . implode( ' + ', gr_price_lines( $totals ) ) . ( $totals['free_gowns'] ? ' (одна для организатора бесплатно)' : '' );
 	$lines[] = 'Итого: ' . gr_money( $booking->total_price );
 	return implode( "\n", $lines );
 }
@@ -44,6 +44,21 @@ function gr_delivery_summary( $booking ) {
 	} else {
 		$lines[] = 'Возврат: клиент привозит сам';
 	}
+	return implode( "\n", $lines );
+}
+
+/** Сообщение заявки, которое клиент отправляет нам в WhatsApp после брони. */
+function gr_booking_whatsapp_text( $booking ) {
+	$totals = gr_calc_totals( $booking->items );
+	$lines  = array( 'Здравствуйте! Бронь №' . $booking->id . ' с сайта.' );
+	$lines[] = 'Когда: ' . gr_format_date( $booking->date_from ) . ', ' . $booking->time_from . '–' . gr_end_time( $booking->time_from );
+	foreach ( $booking->items as $item ) {
+		$lines[] = '• ' . gr_item_label( $item );
+	}
+	$lines[] = 'Итого: ' . gr_money( $booking->total_price ) . ( $totals['free_gowns'] ? ' (одна мантия бесплатно)' : '' );
+	$lines[] = ( $booking->delivery ? 'Доставка: ' . $booking->address : 'Самовывоз' );
+	$lines[] = 'Имя: ' . $booking->customer_name;
+	$lines[] = 'Подтвердите, пожалуйста, бронь и как оплатить.';
 	return implode( "\n", $lines );
 }
 

@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /** Ссылка на WhatsApp (тот же номер, что телефон на странице «Контакты»). */
-function gr_whatsapp_url() {
-	return 'https://wa.me/77055742626?text=' . rawurlencode( 'Здравствуйте! Хочу арендовать мантию' );
+function gr_whatsapp_url( $text = 'Здравствуйте! Хочу арендовать мантию' ) {
+	return 'https://wa.me/77055742626?text=' . rawurlencode( $text );
 }
 
 /** Адрес страницы каталога (страница, где стоит [gown_catalog]). */
@@ -30,7 +30,9 @@ function gr_catalog_url() {
 }
 
 function gr_landing_img( $name ) {
-	return GR_URL . 'public/landing/' . $name . '.webp';
+	$file = 'public/landing/' . $name . '.webp';
+	// ?v=время изменения файла: заменили фото — браузер сразу загрузит новое, а не старое из кэша.
+	return GR_URL . $file . '?v=' . (int) @filemtime( GR_PATH . $file );
 }
 
 /* -------------------------------------------------------------------------
@@ -121,7 +123,7 @@ function gr_landing_shortcode() {
 					</div>
 
 					<div class="grl-slate-result" aria-live="polite">
-						<p class="grl-slate-hint" data-grl-hint>Аренда — <?php echo (int) gr_rental_hours(); ?> часа, начало с 11:00 до 14:00. Выберите дату и время — покажем, какие цвета свободны.</p>
+						<p class="grl-slate-hint" data-grl-hint>Аренда — <?php echo (int) gr_rental_hours(); ?> часа, начало с <?php echo esc_html( gr_start_window() ); ?> (вернуть до 18:00). Выберите дату и время — покажем, какие цвета свободны.</p>
 						<ul class="grl-counts" data-grl-counts hidden>
 							<?php foreach ( $colors as $key => $label ) : ?>
 								<li style="--fabric: <?php echo esc_attr( $hex[ $key ] ); ?>">
@@ -229,7 +231,7 @@ function gr_landing_shortcode() {
 				<ol class="grl-step-list">
 					<li>
 						<h3>Дата и время</h3>
-						<p>Аренда — <?php echo (int) gr_rental_hours(); ?> часа, начало с 11:00 до 14:00. Сразу видно, какие мантии свободны.</p>
+						<p>Аренда — <?php echo (int) gr_rental_hours(); ?> часа, начало с <?php echo esc_html( gr_start_window() ); ?> (вернуть до 18:00). Сразу видно, какие мантии свободны.</p>
 					</li>
 					<li>
 						<h3>Цвета, размеры и количество</h3>

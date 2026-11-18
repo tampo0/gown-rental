@@ -19,6 +19,7 @@
 	// иначе «27000 + 2000» превратится в строку «270002000».
 	cfg.freeFrom = Number(cfg.freeFrom);
 	cfg.freeGownFrom = Number(cfg.freeGownFrom);
+	cfg.kidsPrice = Number(cfg.kidsPrice);
 	var tiers = Object.keys(cfg.tiers).map(function (k) { return [Number(k), Number(cfg.tiers[k])]; })
 		.sort(function (a, b) { return a[0] - b[0]; });
 
@@ -191,8 +192,12 @@
 			deliveryRadio.disabled = qty < cfg.freeFrom;
 			if (deliveryRadio.disabled && deliveryRadio.checked) form.querySelector('[name="delivery"][value="0"]').checked = true;
 			var delivery = form.elements.delivery.value === '1';
-			var unit = unitPrice(qty);
+			var unit = unitPrice(qty); // взрослая — по ступени всего количества (детские тоже считаются)
+			var kids = list.reduce(function (s, i) { return s + (i.size === 'kids' ? i.quantity : 0); }, 0);
+			var adults = qty - kids;
 			var freeGowns = qty >= cfg.freeGownFrom ? 1 : 0;
+			var discount = freeGowns ? (adults ? unit : cfg.kidsPrice) : 0;
+			var total = unit * adults + cfg.kidsPrice * kids - discount;
 
 			// Лесенка цен: подсветить текущую ступень.
 			root.querySelectorAll('.gr-ladder-steps li').forEach(function (li) {
@@ -234,22 +239,23 @@
 					var k = i.color + '|' + i.size;
 					var notThere = matrix && (!matrix[i.color][i.size] || short[k]);
 					html += '<li><span>' + esc(cfg.colors[i.color] + ', ' + cfg.sizes[i.size].toLowerCase() + ' × ' + i.quantity) + '</span>'
-						+ '<span>' + money(unit * i.quantity) + '</span>'
+						+ '<span>' + money((i.size === 'kids' ? cfg.kidsPrice : unit) * i.quantity) + '</span>'
 						+ (notThere ? '<em class="gr-error-text">столько нет на это время — уменьшите количество</em>' : '')
 						+ '</li>';
 				});
 				html += '</ul>';
 
 				html += '<dl class="gr-totals">'
-					+ row(qty + ' ' + plural(qty, 'мантия', 'мантии', 'мантий') + ' × ' + money(unit), money(unit * qty))
-					+ (freeGowns ? row('Одна для организатора', '−' + money(unit)) : '')
+					+ (adults ? row(adults + ' ' + plural(adults, 'мантия', 'мантии', 'мантий') + ' × ' + money(unit), money(unit * adults)) : '')
+					+ (kids ? row(kids + ' ' + plural(kids, 'детская', 'детские', 'детских') + ' × ' + money(cfg.kidsPrice), money(cfg.kidsPrice * kids)) : '')
+					+ (freeGowns ? row('Одна для организатора', '−' + money(discount)) : '')
 					+ row(delivery ? 'Доставка' : 'Самовывоз', 'бесплатно')
-					+ row('<strong>Итого</strong>', '<strong>' + money(unit * (qty - freeGowns)) + '</strong>')
+					+ row('<strong>Итого</strong>', '<strong>' + money(total) + '</strong>')
 					+ '</dl>';
 
 				// Подсказка: сколько добавить до следующей ступени цены.
 				var next = tiers.filter(function (t) { return t[0] > qty; })[0];
-				if (next) {
+				if (next && adults) {
 					var add = next[0] - qty;
 					html += '<p class="gr-nudge">Ещё ' + add + ' ' + plural(add, 'мантия', 'мантии', 'мантий') + ' — и каждая будет по ' + money(next[1]) + '</p>';
 				} else if (!freeGowns) {
@@ -292,6 +298,8 @@
 			post('gr_submit_booking', data).then(function (res) {
 				if (res.success) {
 					root.querySelector('.gr-success-text').innerHTML = receipt(res.data);
+					// Сразу открываем WhatsApp с готовым сообщением заявки (если браузер не заблокирует — есть кнопка).
+					if (res.data.whatsapp) window.open(res.data.whatsapp, '_blank', 'noopener');
 					form.hidden = true;
 					success.hidden = false;
 					success.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -329,12 +337,13 @@
 				+ '<dl class="gr-success-list">'
 				+ '<div><dt>Когда</dt><dd>' + esc(d.date) + '<br>' + esc(d.time) + '</dd></div>'
 				+ '<div><dt>Мантии</dt><dd>' + d.items.map(function (i) { return esc(i.color + ', ' + i.size.toLowerCase() + ' — ' + i.quantity + ' шт.'); }).join('<br>') + '</dd></div>'
-				+ '<div><dt>Цена</dt><dd>' + esc(d.quantity + ' × ' + d.unit_price) + (d.free_gowns ? '<br>одна для организатора бесплатно' : '') + '</dd></div>'
+				+ '<div><dt>Цена</dt><dd>' + esc(d.price_lines.join('\n')).replace(/\n/g, '<br>') + (d.free_gowns ? '<br>одна для организатора бесплатно' : '') + '</dd></div>'
 				+ '<div><dt>' + (d.delivery ? 'Доставка' : 'Самовывоз') + '</dt><dd>' + esc(d.address) + '</dd></div>'
 				+ '<div class="gr-success-total"><dt>Итого</dt><dd>' + esc(d.total) + '</dd></div>'
 				+ '</dl>'
-				+ '<p class="gr-success-next">Мы напишем вам в WhatsApp на номер ' + esc(d.phone) + ', чтобы подтвердить бронь.'
-				+ (d.delivery ? '' : ' При получении возьмите удостоверение личности — это залог.') + '</p>';
+				+ '<p class="gr-success-next"><strong>Последний шаг:</strong> отправьте нам заявку в WhatsApp — там подтвердим бронь и примем оплату. '
+				+ 'Без сообщения в WhatsApp бронь не действует.' + (d.delivery ? '' : ' При получении возьмите удостоверение личности — это залог.') + '</p>'
+				+ (d.whatsapp ? '<a class="gr-wa-send" href="' + esc(d.whatsapp) + '" target="_blank" rel="noopener">Отправить заявку в WhatsApp</a>' : '');
 		}
 
 		function showErrors(list) {

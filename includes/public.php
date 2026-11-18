@@ -34,6 +34,7 @@ function gr_register_assets() {
 			'nonce'        => wp_create_nonce( 'gr_public' ),
 			'tiers'        => gr_price_tiers(),
 			'freeGownFrom' => gr_free_gown_from(),
+			'kidsPrice'    => gr_kids_price(),
 			'freeFrom'     => gr_free_delivery_from(),
 			'today'        => current_time( 'Y-m-d' ),
 			'colors'       => gr_colors(),
@@ -68,14 +69,14 @@ add_shortcode( 'gown_booking', 'gr_catalog_shortcode' );
 
 /**
  * Проверка даты и времени для клиентов сайта: аренда в Шымкенте — 3 часа,
- * начало с 11:00 до 14:00, не в прошлом.
+ * начало с 9:30 до 15:00 (вернуть до 18:00), не в прошлом.
  */
 function gr_public_slot_error( $date, $time ) {
 	if ( ! gr_is_valid_date( $date ) ) {
 		return 'Укажите дату аренды.';
 	}
 	if ( ! in_array( $time, gr_start_times(), true ) ) {
-		return 'Выберите время начала: с 11:00 до 14:00.';
+		return 'Выберите время начала: с ' . gr_start_window() . '.';
 	}
 	if ( $date . ' ' . $time <= current_time( 'Y-m-d H:i' ) ) {
 		return 'Это время уже прошло — выберите другое.';
@@ -205,11 +206,13 @@ function gr_ajax_submit_booking() {
 			'items'      => $items,
 			'quantity'   => $totals['quantity'],
 			'unit_price' => gr_money( $totals['unit_price'] ),
+			'price_lines' => gr_price_lines( $totals ),
 			'free_gowns' => $totals['free_gowns'],
 			'total'      => gr_money( $booking->total_price ),
 			'delivery'   => (bool) $booking->delivery,
 			'address'    => $booking->delivery ? $booking->address : gr_pickup_address(),
 			'phone'      => $booking->phone,
+			'whatsapp'   => gr_whatsapp_url( gr_booking_whatsapp_text( $booking ) ),
 		)
 	);
 }

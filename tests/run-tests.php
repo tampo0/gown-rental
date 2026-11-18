@@ -123,6 +123,23 @@ try {
 	check( 'Доставка всегда 0 ₸', 0 === $t['delivery_fee'] && 0 === $t['pickup_fee'] );
 	check( 'Аренда 3 часа: 11:30 → 14:30', '14:30' === gr_end_time( '11:30' ) );
 
+	$mix = array(
+		array( 'color' => 'red', 'size' => 'standard', 'quantity' => 3 ),
+		array( 'color' => 'black', 'size' => 'kids', 'quantity' => 2 ),
+	);
+	$t = gr_calc_totals( $mix );
+	check( 'Детские считаются в общее количество: 5 шт. → взрослые по 2 500, детские по 2 000 = 11 500 ₸', 11500 === $t['total'], 'получили ' . $t['total'] );
+	$t = gr_calc_totals( $item( 3, 'red', 'kids' ) );
+	check( 'Только детские: 3 × 2 000 = 6 000 ₸ (не 3 000 за штуку)', 6000 === $t['total'], 'получили ' . $t['total'] );
+	$t = gr_calc_totals( array( array( 'color' => 'red', 'size' => 'standard', 'quantity' => 15 ), array( 'color' => 'red', 'size' => 'kids', 'quantity' => 5 ) ) );
+	check( '20 шт. (5 детских): бесплатна одна взрослая — 15×2 000 + 5×2 000 − 2 000 = 38 000 ₸', 38000 === $t['total'], 'получили ' . $t['total'] );
+
+	$times = gr_start_times();
+	check( 'Начало аренды с 09:30 до 15:00 каждые 30 минут', '09:30' === $times[0] && '15:00' === end( $times ) && 12 === count( $times ) );
+
+	check( 'Цены из настроек: без ступени «от 1» не сохраняются', gr_price_tiers() === gr_sanitize_price_tiers( array( array( 'from' => 3, 'price' => 1000 ) ) ) );
+	check( 'Цены из настроек: строки сортируются, пустые отбрасываются', array( 1 => 4000, 5 => 2000 ) === gr_sanitize_price_tiers( array( array( 'from' => 5, 'price' => 2000 ), array( 'from' => 1, 'price' => 4000 ), array( 'from' => '', 'price' => '' ) ) ) );
+
 	section( '2. Наличие по дням — другие города (на складе 3 шт.)' );
 	check( 'Пока броней нет — свободно 3', 3 === gr_get_available( $color, $size, '2030-03-01', '2030-03-05' ) );
 
@@ -236,8 +253,8 @@ try {
 	check( 'Нехватка помечена как «short» без количества', in_array( 'red|standard', $res['data']['short'] ?? array(), true ) );
 	check( 'У фиолетового нет детского размера в ответе', ! isset( $res['data']['matrix']['purple']['kids'] ) );
 	check( '«Великан» только у бордового и изумруда', isset( $res['data']['matrix']['red']['giant'], $res['data']['matrix']['green']['giant'] ) && ! isset( $res['data']['matrix']['blue']['giant'] ) );
-	$res = call_ajax( 'gr_ajax_quote', array( 'nonce' => wp_create_nonce( 'gr_public' ), 'date' => '2030-03-03', 'time' => '15:00', 'items' => '[]' ) );
-	check( 'Начало позже 14:00 сайт не принимает', isset( $res['success'] ) && false === $res['success'] );
+	$res = call_ajax( 'gr_ajax_quote', array( 'nonce' => wp_create_nonce( 'gr_public' ), 'date' => '2030-03-03', 'time' => '15:30', 'items' => '[]' ) );
+	check( 'Начало позже 15:00 сайт не принимает (вернуть нужно до 18:00)', isset( $res['success'] ) && false === $res['success'] );
 
 	section( '5б. Согласие на обработку персональных данных' );
 	$form = array(
@@ -253,6 +270,7 @@ try {
 	check( 'Без галочки согласия бронь с сайта не принимается', isset( $res['success'] ) && false === $res['success'] && false !== strpos( implode( ' ', $res['data']['errors'] ?? array() ), 'согласие' ) );
 	$res = call_ajax( 'gr_ajax_submit_booking', $form + array( 'consent' => '1' ) );
 	check( 'С галочкой — бронь принята', ! empty( $res['success'] ), wp_json_encode( $res ) );
+	check( 'В ответе ссылка WhatsApp с номером брони в тексте', ! empty( $res['data']['whatsapp'] ) && false !== strpos( rawurldecode( $res['data']['whatsapp'] ), 'Бронь №' . ( $res['data']['id'] ?? '' ) ) );
 	if ( ! empty( $res['data']['id'] ) ) {
 		$GLOBALS['gr_created'][] = (int) $res['data']['id'];
 	}

@@ -22,7 +22,7 @@ function gr_catalog_photo( $color ) {
 function gr_catalog_photos( $color ) {
 	$files = glob( GR_PATH . 'public/catalog/' . $color . '-*.webp' ) ?: array();
 	sort( $files );
-	$urls = array_map( function ( $f ) { return GR_URL . 'public/catalog/' . basename( $f ); }, $files );
+	$urls = array_map( function ( $f ) { return GR_URL . 'public/catalog/' . basename( $f ) . '?v=' . filemtime( $f ); }, $files );
 	if ( ! $urls && gr_catalog_photo( $color ) ) {
 		$urls[] = gr_catalog_photo( $color );
 	}
@@ -46,7 +46,7 @@ function gr_price_ladder_html() {
 				</li>
 			<?php endforeach; ?>
 		</ol>
-		<p class="gr-ladder-gift">От <?php echo (int) gr_free_gown_from(); ?> мантий — одна для организатора бесплатно</p>
+		<p class="gr-ladder-gift">Детская мантия — всегда <?php echo esc_html( gr_money( gr_kids_price() ) ); ?> (входит в общее количество). От <?php echo (int) gr_free_gown_from(); ?> мантий — одна для организатора бесплатно.</p>
 	</div>
 	<?php
 	return ob_get_clean();
@@ -97,7 +97,7 @@ function gr_catalog_shortcode() {
 								</select>
 							</label>
 						</div>
-						<p class="grc-note">Аренда в Шымкенте — <?php echo (int) gr_rental_hours(); ?> часа, начало с 11:00 до 14:00. Другой город? <a href="<?php echo esc_url( gr_whatsapp_url() ); ?>" target="_blank" rel="noopener">Напишите в WhatsApp</a> — аренда на сутки с учётом дороги.</p>
+						<p class="grc-note">Аренда в Шымкенте — <?php echo (int) gr_rental_hours(); ?> часа, начало с <?php echo esc_html( gr_start_window() ); ?> (вернуть до 18:00). Другой город? <a href="<?php echo esc_url( gr_whatsapp_url() ); ?>" target="_blank" rel="noopener">Напишите в WhatsApp</a> — аренда на сутки с учётом дороги.</p>
 					</div>
 				</section>
 
@@ -230,7 +230,7 @@ function gr_catalog_shortcode() {
 							<input type="text" name="customer_name" autocomplete="name" required>
 						</label>
 						<label class="grc-field">
-							<span>Телефон (WhatsApp) *</span>
+							<span>Телефон с WhatsApp *</span>
 							<input type="tel" name="phone" autocomplete="tel" placeholder="+7 700 123 45 67" required>
 						</label>
 					</div>
@@ -263,7 +263,7 @@ function gr_catalog_shortcode() {
 					<span>Согласен на обработку персональных данных по <a href="<?php echo esc_url( get_privacy_policy_url() ); ?>" target="_blank" rel="noopener">политике конфиденциальности</a></span>
 				</label>
 				<button type="submit" class="gr-submit grc-submit" disabled>Забронировать</button>
-				<p class="gr-hint">Оплата после брони, мы напишем вам в WhatsApp.</p>
+				<p class="gr-hint">Подтверждение и оплата — в WhatsApp. Если на номере нет WhatsApp, заказ не принимается.</p>
 			</aside>
 		</form>
 

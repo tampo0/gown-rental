@@ -901,3 +901,20 @@
 .gr-success-list .gr-success-total { border-bottom: 0; border-top: 1.5px solid var(--ink); }
 .gr-success-total dd { font-family: var(--display); font-weight: 700; font-size: 1.2rem; }
 .grc .gr-success-next { margin-bottom: 20px !important; color: var(--ink-soft); }
+
+/* Кнопка «Отправить заявку в WhatsApp» после брони */
+.grc .gr-wa-send {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 56px;
+	margin-bottom: 12px;
+	border-radius: 999px;
+	background: #1f9d55;
+	color: #fff;
+	font-weight: 600;
+	font-size: 1.05rem;
+	text-decoration: none;
+}
+.grc .gr-wa-send:hover { background: #188046; color: #fff; }
+.grc .gr-again { background: transparent; border-color: var(--ink); }
