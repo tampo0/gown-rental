@@ -121,7 +121,7 @@ function gr_terms_shortcode() {
 
 				<section class="grp-block" aria-labelledby="grp-deposit">
 					<h2 id="grp-deposit" class="grp-h2">Залог</h2>
-					<p class="grp-text">При самовывозе оставьте <strong>оригинал удостоверения личности</strong>. Если его нет — <strong>фото удостоверения и 10 000 ₸</strong>. Всё вернём, когда вы сдадите мантии.</p>
+					<p class="grp-text">При самовывозе оставьте <strong>оригинал удостоверения личности</strong>. Если его нет — <strong>фото удостоверения и 10&nbsp;000&nbsp;₸</strong>. Всё вернём, когда вы сдадите мантии.</p>
 				</section>
 			</div>
 

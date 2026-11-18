@@ -30,7 +30,7 @@ function gr_booking_summary( $booking ) {
 /** Доставка и забор одним блоком текста. */
 function gr_delivery_summary( $booking ) {
 	if ( ! $booking->delivery && ! $booking->pickup ) {
-		return 'Получение: самовывоз — ' . gr_pickup_address() . "\nЗалог: оригинал удостоверения личности (или фото удостоверения + 10 000 ₸).";
+		return 'Получение: самовывоз — ' . gr_pickup_address() . "\nЗалог: оригинал удостоверения личности (или фото удостоверения + 10&nbsp;000&nbsp;₸).";
 	}
 	$lines = array( 'Адрес: ' . $booking->address );
 	if ( $booking->delivery ) {

@@ -135,7 +135,13 @@
 		}
 
 		/* ---------- Дата и время ---------- */
-		[dateEl, timeEl].forEach(function (el) { el.addEventListener('change', function () { loadAvailability(); }); });
+		[dateEl, timeEl].forEach(function (el) {
+			el.addEventListener('change', function () {
+				// Safari на iPhone даёт выбрать прошедшую дату, хотя у поля есть min, — поправляем на сегодня.
+				if (el === dateEl && dateEl.value && dateEl.value < cfg.today) dateEl.value = cfg.today;
+				loadAvailability();
+			});
+		});
 
 		// Дата и время из ссылки с главной: /каталог/?date=2026-05-20&time=11:00
 		(function prefillFromUrl() {

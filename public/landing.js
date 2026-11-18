@@ -97,7 +97,11 @@
 			;
 	}
 
-	from.addEventListener('change', check);
+	from.addEventListener('change', function () {
+		// Safari на iPhone даёт выбрать прошедшую дату, хотя у поля есть min, — поправляем на сегодня.
+		if (from.value && from.value < cfg.today) from.value = cfg.today;
+		check();
+	});
 	to.addEventListener('change', check);
 
 	form.addEventListener('submit', function (e) {

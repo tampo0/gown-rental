@@ -97,7 +97,7 @@ function gr_catalog_shortcode() {
 								</select>
 							</label>
 						</div>
-						<p class="grc-note">Аренда в Шымкенте — <?php echo (int) gr_rental_hours(); ?> часа, начало с <?php echo esc_html( gr_start_window() ); ?> (вернуть до 18:00). Другой город? <a href="<?php echo esc_url( gr_whatsapp_url() ); ?>" target="_blank" rel="noopener">Напишите в WhatsApp</a> — аренда на сутки с учётом дороги.</p>
+						<p class="grc-note">Аренда в Шымкенте — <?php echo (int) gr_rental_hours(); ?> часа.<br>Другой город? <a href="<?php echo esc_url( gr_whatsapp_url() ); ?>" target="_blank" rel="noopener">Напишите в WhatsApp</a></p>
 					</div>
 				</section>
 
@@ -199,7 +199,7 @@ function gr_catalog_shortcode() {
 									Открыть в 2ГИС
 									<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16"><path d="M7 17L17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
 								</a>
-								<p class="grc-note"><strong>Залог:</strong> оригинал удостоверения личности. Если его нет — фото удостоверения и 10 000 ₸, вернём при возврате мантий.</p>
+								<p class="grc-note"><strong>Залог:</strong> оригинал удостоверения личности. Если его нет — фото удостоверения и 10&nbsp;000&nbsp;₸, вернём при возврате мантий.</p>
 							</div>
 						</div>
 
