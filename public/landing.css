@@ -777,11 +777,6 @@
 	}
 }
 
-/* Длинное название сайта в шапке на телефоне — помельче, чтобы влезло в одну строку */
-@media (max-width: 600px) {
-	.gr-landing-page .site-branding .site-title { font-size: 1.15rem; white-space: nowrap; }
-}
-
 /* ---------- Нам доверяют (полоса на главной) ---------- */
 .grl-trust {
 	max-width: 1520px;
@@ -876,3 +871,11 @@
 .grl-terms a { color: var(--ink); text-decoration-color: var(--gold); text-underline-offset: 3px; }
 .grl-steps-copy .gr-ladder { margin-top: 24px; max-width: 520px; }
 .grl .grl-pricetag-per:first-child { margin-bottom: -4px; }
+
+/* Групповое фото на телефоне: ценник меньше и в углу, чтобы не закрывать лица */
+@media (max-width: 600px) {
+	.grl .grl-pricetag { left: -6px; bottom: 3%; width: 118px; padding: 10px 10px 9px 30px; border-radius: 8px; }
+	.grl-pricetag-sum { font-size: 1.35rem; }
+	.grl .grl-pricetag-per { font-size: 0.66rem; line-height: 1.25; }
+	.grl-pricetag-hole { left: 10px; transform: scale(0.75); }
+}

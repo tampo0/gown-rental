@@ -46,7 +46,7 @@ function gr_price_ladder_html() {
 				</li>
 			<?php endforeach; ?>
 		</ol>
-		<p class="gr-ladder-gift">Детская мантия — всегда <?php echo esc_html( gr_money( gr_kids_price() ) ); ?> (входит в общее количество). От <?php echo (int) gr_free_gown_from(); ?> мантий — одна для организатора бесплатно.</p>
+		<p class="gr-ladder-gift">Детская мантия — <?php echo esc_html( gr_money( gr_kids_price() ) ); ?>.<br>От <?php echo (int) gr_free_gown_from(); ?> мантий — одна для организатора бесплатно</p>
 	</div>
 	<?php
 	return ob_get_clean();
@@ -263,7 +263,7 @@ function gr_catalog_shortcode() {
 					<span>Согласен на обработку персональных данных по <a href="<?php echo esc_url( get_privacy_policy_url() ); ?>" target="_blank" rel="noopener">политике конфиденциальности</a></span>
 				</label>
 				<button type="submit" class="gr-submit grc-submit" disabled>Забронировать</button>
-				<p class="gr-hint">Подтверждение и оплата — в WhatsApp. Если на номере нет WhatsApp, заказ не принимается.</p>
+				<p class="gr-hint">Бронь подтверждается после оплаты в WhatsApp — до этого мантии за вами не закреплены. Если на номере нет WhatsApp, заказ не принимается.</p>
 			</aside>
 		</form>
 

@@ -484,10 +484,6 @@
 }
 
 /* Длинное название сайта в шапке на телефоне — помельче, чтобы влезло в одну строку */
-@media (max-width: 600px) {
-	.gr-landing-page .site-branding .site-title { font-size: 1.15rem; white-space: nowrap; }
-}
-
 /* ---------- «Нам доверяют» ---------- */
 .grt-hero {
 	display: grid;
@@ -681,3 +677,24 @@
 .gr-landing-page .site-footer a { color: inherit; text-decoration: underline; text-decoration-color: #d6b25e; text-underline-offset: 3px; }
 
 .grp .gr-ladder { margin: 16px 0; max-width: 560px; }
+
+/* «Нам доверяют» — спокойнее: заголовок, итог, названия и цифры мельче */
+.grt .grp-title { font-size: clamp(2rem, 3.6vw, 3.4rem); }
+.grt-total-num { font-size: clamp(2.4rem, 4.2vw, 3.8rem); gap: 14px; letter-spacing: -0.04em; }
+.grt-total-num span { font-size: 0.88rem; }
+.grt-bar { height: 10px; margin-top: 18px; }
+.grt-row { padding: 20px 0; }
+.grt-row.is-featured { padding: 24px 0; }
+.grt-row-logo { height: 56px; }
+.grt-row.is-featured .grt-row-logo { height: 76px; }
+.grp .grt-row-name h2 { font-size: clamp(0.98rem, 1.2vw, 1.12rem); margin-bottom: 4px; }
+.grt-row-name p { font-size: 0.7rem; }
+.grt-row-count { font-size: 0.7rem; }
+.grt-row-count span { font-size: clamp(1.6rem, 2.4vw, 2.2rem); letter-spacing: -0.04em; }
+.grt-row.is-featured .grt-row-count span { font-size: clamp(1.9rem, 3vw, 2.7rem); }
+@media (max-width: 600px) {
+	.grt-row-logo { height: 46px; }
+	.grt-row.is-featured .grt-row-logo { height: 58px; }
+	.grt-row-logo img { max-width: 170px; }
+	.grt-row-count span, .grt-row.is-featured .grt-row-count span { font-size: 1.7rem; }
+}

@@ -212,8 +212,8 @@ function gr_validate_booking( $data, $id = 0 ) {
 	}
 
 	// Главная проверка: хватит ли мантий на эти даты.
-	// Делаем её, только если остальное верно и бронь «активная».
-	if ( ! $errors && in_array( $data['status'], gr_active_statuses(), true ) ) {
+	// Новая заявка тоже проверяется (против подтверждённых броней), хотя склад не занимает.
+	if ( ! $errors && in_array( $data['status'], array_merge( array( 'new' ), gr_active_statuses() ), true ) ) {
 		$errors = gr_check_items_availability( $data['items'], $data['date_from'], $data['date_to'], $id, $data['time_from'] );
 	}
 
@@ -303,8 +303,8 @@ function gr_replace_booking_items( $booking_id, $items ) {
 
 /**
  * Быстрая смена статуса (из списка броней).
- * Если бронь снова становится «активной» (например, «Отменена» → «Подтверждена»),
- * проверяем, что мантии на эти даты ещё свободны.
+ * При переводе в «Подтверждена»/«Выдана» мантии списываются со склада,
+ * поэтому проверяем, что мантии на эти даты ещё свободны.
  *
  * @return true|WP_Error
  */

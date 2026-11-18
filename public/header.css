@@ -1,0 +1,235 @@
+/* Шапка сайта — студийный стиль (DESIGN.md: sweep, ink, одно золото). */
+.grh {
+	--grh-sweep: #fafaf8;
+	--grh-ink: #121315;
+	--grh-ink-soft: #3d4046;
+	--grh-gold: #d6b25e;
+	--grh-gold-light: #e3c372;
+	--grh-gold-deep: #8f6d22;
+	--grh-hair: rgba(18, 19, 21, 0.16);
+	--grh-ease: cubic-bezier(0.16, 1, 0.3, 1);
+	position: sticky;
+	top: var(--wp-admin--admin-bar--height, 0px);
+	z-index: 100;
+	background: var(--grh-sweep);
+	font-family: "Golos Text", system-ui, sans-serif;
+	color: var(--grh-ink);
+	box-shadow: 0 1px 0 transparent;
+	transition: box-shadow 0.3s var(--grh-ease);
+}
+.grh.is-scrolled { box-shadow: 0 1px 0 var(--grh-hair); }
+
+.grh-bar {
+	max-width: 1520px;
+	margin: 0 auto;
+	padding: 0 clamp(16px, 4vw, 56px);
+	height: 84px;
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	transition: height 0.4s var(--grh-ease);
+}
+.grh.is-scrolled .grh-bar { height: 68px; }
+
+/* Логотип */
+.grh .grh-brand {
+	display: flex;
+	flex-direction: column;
+	line-height: 1;
+	color: var(--grh-ink);
+	text-decoration: none;
+	margin-right: auto;
+}
+.grh-brand-name {
+	font-family: Unbounded, "Golos Text", sans-serif;
+	font-weight: 700;
+	font-size: 1.35rem;
+	letter-spacing: -0.03em;
+}
+.grh-brand-sub {
+	margin-top: 5px;
+	font-size: 0.66rem;
+	font-weight: 600;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	color: var(--grh-ink-soft);
+}
+
+/* Меню */
+.grh-nav { position: relative; }
+.grh-list { display: flex; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.grh .grh-link {
+	position: relative;
+	display: block;
+	padding: 10px 14px;
+	border-radius: 999px;
+	font-size: 0.98rem;
+	font-weight: 500;
+	color: var(--grh-ink-soft);
+	text-decoration: none;
+	white-space: nowrap;
+	transform: translate(var(--mx, 0), var(--my, 0)) scale(var(--s, 1));
+	transition: color 0.25s var(--grh-ease), background-color 0.25s var(--grh-ease);
+}
+.grh .grh-link[aria-current="page"] { color: var(--grh-ink); font-weight: 600; }
+.grh .grh-link:hover,
+.grh .grh-link:focus-visible { background: var(--grh-ink); color: #fff; outline: none; }
+
+/* Рамка автофокуса: 4 уголка, ездят между пунктами */
+.grh-focus {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: var(--fw, 0);
+	height: var(--fh, 0);
+	transform: translate(var(--fx, 0), var(--fy, 0));
+	pointer-events: none;
+	opacity: 0;
+	transition: transform 0.45s var(--grh-ease), width 0.45s var(--grh-ease), height 0.45s var(--grh-ease), opacity 0.2s;
+}
+.grh-focus.is-on { opacity: 1; }
+.grh-focus i {
+	position: absolute;
+	width: 9px;
+	height: 9px;
+	border: 0 solid var(--grh-ink);
+	transition: inset 0.45s var(--grh-ease);
+}
+.grh-focus i:nth-child(1) { top: -13px; left: -13px; border-top-width: 2px; border-left-width: 2px; }
+.grh-focus i:nth-child(2) { top: -13px; right: -13px; border-top-width: 2px; border-right-width: 2px; }
+.grh-focus i:nth-child(3) { bottom: -13px; left: -13px; border-bottom-width: 2px; border-left-width: 2px; }
+.grh-focus i:nth-child(4) { bottom: -13px; right: -13px; border-bottom-width: 2px; border-right-width: 2px; }
+/* На активной странице рамка «в покое» — золотая; при наведении «щёлкает» и сжимается */
+.grh-focus.is-rest i { border-color: var(--grh-gold-deep); }
+.grh-focus.is-lock i:nth-child(1) { top: -9px; left: -9px; }
+.grh-focus.is-lock i:nth-child(2) { top: -9px; right: -9px; }
+.grh-focus.is-lock i:nth-child(3) { bottom: -9px; left: -9px; }
+.grh-focus.is-lock i:nth-child(4) { bottom: -9px; right: -9px; }
+
+/* Кнопки */
+.grh-actions { display: flex; gap: 16px; }
+.grh .grh-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: 46px;
+	padding: 0 1.3em;
+	border: 1.5px solid var(--grh-ink);
+	border-radius: 999px;
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--grh-ink);
+	text-decoration: none;
+	white-space: nowrap;
+	transform: translate(var(--mx, 0), var(--my, 0)) scale(var(--s, 1));
+	transition: background-color 0.25s var(--grh-ease), color 0.25s var(--grh-ease), border-color 0.25s var(--grh-ease), box-shadow 0.3s var(--grh-ease);
+}
+.grh .grh-btn-line { background: transparent; }
+.grh .grh-btn-line:hover, .grh .grh-btn-line:focus-visible { background: var(--grh-ink); color: #fff; }
+.grh .grh-btn-gold { background: var(--grh-gold); border-color: var(--grh-gold); }
+.grh .grh-btn-gold:hover, .grh .grh-btn-gold:focus-visible {
+	background: var(--grh-gold-light);
+	border-color: var(--grh-gold-light);
+	color: var(--grh-ink);
+	box-shadow: 0 8px 24px -10px rgba(143, 109, 34, 0.7);
+}
+.grh-arrow { transition: transform 0.3s var(--grh-ease); }
+.grh-btn-gold:hover .grh-arrow { transform: translateX(4px); }
+.grh .grh-btn:focus-visible { outline: 2px solid var(--grh-ink); outline-offset: 3px; }
+
+/* Бургер (телефон/планшет) */
+.grh-burger {
+	display: none;
+	width: 46px;
+	height: 46px;
+	padding: 0;
+	border: 1.5px solid var(--grh-ink);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--grh-ink);
+	cursor: pointer;
+}
+.grh-burger:hover, .grh-burger:focus { background: transparent; color: var(--grh-ink); }
+.grh-burger:focus-visible { outline: 2px solid var(--grh-ink); outline-offset: 3px; }
+.grh-burger-lines { position: relative; display: block; width: 18px; height: 10px; margin: 0 auto; }
+.grh-burger-lines i {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	height: 2px;
+	border-radius: 2px;
+	background: currentColor;
+	transition: transform 0.4s var(--grh-ease), top 0.4s var(--grh-ease);
+}
+.grh-burger-lines i:first-child { top: 0; }
+.grh-burger-lines i:last-child { top: 8px; }
+.grh-burger[aria-expanded="true"] .grh-burger-lines i:first-child { top: 4px; transform: rotate(45deg); }
+.grh-burger[aria-expanded="true"] .grh-burger-lines i:last-child { top: 4px; transform: rotate(-45deg); }
+
+/* Полноэкранное меню */
+.grh-sheet {
+	position: fixed;
+	inset: var(--grh-top, 68px) 0 0 0;
+	z-index: 99;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 32px;
+	padding: 28px clamp(16px, 4vw, 56px) calc(28px + env(safe-area-inset-bottom));
+	background: var(--grh-sweep);
+	overflow-y: auto;
+	clip-path: inset(0 0 100% 0);
+	transition: clip-path 0.5s var(--grh-ease);
+}
+.grh-sheet[hidden] { display: none; }
+.grh-sheet.is-open { clip-path: inset(0 0 0 0); }
+.grh-sheet-list { margin: 0; padding: 0; list-style: none; }
+.grh-sheet-list li { border-bottom: 1px solid var(--grh-hair); }
+.grh-sheet-list a {
+	display: block;
+	padding: 16px 0;
+	font-family: Unbounded, "Golos Text", sans-serif;
+	font-weight: 700;
+	font-size: clamp(1.6rem, 7vw, 2.4rem);
+	letter-spacing: -0.03em;
+	line-height: 1.1;
+	color: var(--grh-ink);
+	text-decoration: none;
+	opacity: 0;
+	transform: translateY(14px);
+	transition: opacity 0.5s var(--grh-ease), transform 0.5s var(--grh-ease), color 0.2s;
+}
+.grh-sheet.is-open .grh-sheet-list a { opacity: 1; transform: none; }
+.grh-sheet-list li:nth-child(2) a { transition-delay: 40ms; }
+.grh-sheet-list li:nth-child(3) a { transition-delay: 80ms; }
+.grh-sheet-list li:nth-child(4) a { transition-delay: 120ms; }
+.grh-sheet-list li:nth-child(5) a { transition-delay: 160ms; }
+.grh-sheet-list li:nth-child(6) a { transition-delay: 200ms; }
+.grh-sheet-list a[aria-current="page"] { color: var(--grh-gold-deep); }
+.grh-sheet-list a:hover, .grh-sheet-list a:focus-visible { color: var(--grh-gold-deep); outline: none; }
+.grh-sheet-foot { display: grid; gap: 10px; }
+.grh-sheet-foot .grh-btn { height: 52px; font-size: 1rem; }
+.grh-sheet-meta { margin: 8px 0 0; font-size: 0.95rem; line-height: 1.5; color: var(--grh-ink-soft); font-variant-numeric: tabular-nums; }
+.grh-sheet-meta a { color: var(--grh-ink); text-decoration: underline; text-decoration-color: var(--grh-gold); text-underline-offset: 3px; }
+html.grh-locked, html.grh-locked body { overflow: hidden; }
+
+@media (max-width: 1100px) {
+	.grh-nav, .grh-actions { display: none; }
+	.grh-burger { display: block; }
+	.grh-bar, .grh.is-scrolled .grh-bar { height: 68px; }
+}
+@media (max-width: 600px) {
+	.grh-brand-name { font-size: 1.15rem; }
+	.grh-brand-sub { font-size: 0.6rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.grh *, .grh { transition: none !important; }
+	.grh .grh-link, .grh .grh-btn { transform: none !important; }
+}
+
+/* Тема Kadence задаёт #masthead { position: relative } — перебиваем, иначе отступ под панель WordPress сдвигает шапку на контент. */
+#masthead.grh { position: sticky; top: var(--wp-admin--admin-bar--height, 0px); }
+/* На телефоне панель WordPress прокручивается вместе со страницей — шапка прилипает к самому верху. */
+@media (max-width: 600px) { #masthead.grh { top: 0; } }

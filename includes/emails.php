@@ -58,7 +58,7 @@ function gr_booking_whatsapp_text( $booking ) {
 	$lines[] = 'Итого: ' . gr_money( $booking->total_price ) . ( $totals['free_gowns'] ? ' (одна мантия бесплатно)' : '' );
 	$lines[] = ( $booking->delivery ? 'Доставка: ' . $booking->address : 'Самовывоз' );
 	$lines[] = 'Имя: ' . $booking->customer_name;
-	$lines[] = 'Подтвердите, пожалуйста, бронь и как оплатить.';
+	$lines[] = 'Как оплатить, чтобы подтвердить бронь?';
 	return implode( "\n", $lines );
 }
 
@@ -87,7 +87,7 @@ function gr_send_new_booking_emails( $booking ) {
 		$client_body = "Здравствуйте, {$booking->customer_name}!\n\n"
 			. "Мы получили вашу заявку №{$booking->id}.\n\n"
 			. gr_booking_summary( $booking ) . "\n\n"
-			. "Мы свяжемся с вами по номеру {$booking->phone} для подтверждения.\n\n"
+			. "Бронь подтверждается только после оплаты — до этого мантии за вами не закреплены. Отправьте заявку нам в WhatsApp, и мы пришлём реквизиты.\n\n"
 			. $site;
 		wp_mail( $booking->email, "Заявка №{$booking->id} принята — {$site}", $client_body );
 	}

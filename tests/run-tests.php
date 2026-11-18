@@ -19,6 +19,7 @@ $_SERVER['HTTP_HOST'] = $_SERVER['HTTP_HOST'] ?? 'gown-rental.local';
 require dirname( __DIR__, 4 ) . '/wp-load.php';
 
 // Админские файлы WordPress подключает только в админке — для тестов AJAX подключаем сами.
+require_once ABSPATH . 'wp-admin/includes/template.php'; // add_settings_error() для проверки настроек цен
 require_once GR_PATH . 'admin/menu.php';
 require_once GR_PATH . 'admin/bookings-page.php';
 
@@ -48,7 +49,7 @@ function make_booking( $fields ) {
 		array(
 			'customer_name' => 'Автотест',
 			'phone'         => '+7 700 000 00 00',
-			'status'        => 'new',
+			'status'        => 'confirmed', // склад занимают только подтверждённые (оплаченные) брони
 			'source'        => 'site',
 		),
 		$fields
@@ -160,7 +161,7 @@ try {
 			array(
 				'customer_name' => 'Автотест',
 				'phone'         => '+7 700 000 00 00',
-				'status'        => 'new',
+				'status'        => 'confirmed',
 				'source'        => 'site',
 				'date_from'     => '2030-03-01',
 				'date_to'       => '2030-03-03',
@@ -204,6 +205,18 @@ try {
 	check( 'D отмечена «Возвращена»', ! is_wp_error( $r ) );
 	$r = gr_set_booking_status( $a, 'confirmed' );
 	check( 'Теперь A можно снова подтвердить', ! is_wp_error( $r ), is_wp_error( $r ) ? $r->get_error_message() : '' );
+
+	// 10 марта, на складе 3 шт.: новая (неоплаченная) заявка склад не занимает.
+	$n1 = make_booking( array( 'status' => 'new', 'date_from' => '2030-03-10', 'date_to' => '2030-03-10', 'items' => $item( 3 ) ) );
+	check( 'Новая заявка на 3 шт. принята', ! is_wp_error( $n1 ), errors_of( $n1 ) );
+	check( 'Пока заявка не подтверждена, свободны все 3 шт.', 3 === gr_get_available( $color, $size, '2030-03-10', '2030-03-10' ) );
+	$n2 = make_booking( array( 'status' => 'new', 'date_from' => '2030-03-10', 'date_to' => '2030-03-10', 'items' => $item( 2 ) ) );
+	check( 'Вторая новая заявка на тот же день тоже принята', ! is_wp_error( $n2 ), errors_of( $n2 ) );
+	check( 'Подтверждение первой заявки прошло', ! is_wp_error( gr_set_booking_status( $n1, 'confirmed' ) ) );
+	check( 'После подтверждения свободно 0 шт.', 0 === gr_get_available( $color, $size, '2030-03-10', '2030-03-10' ) );
+	check( 'Вторую заявку подтвердить нельзя — мантий уже нет', is_wp_error( gr_set_booking_status( $n2, 'confirmed' ) ) );
+	$n3 = make_booking( array( 'status' => 'new', 'date_from' => '2030-03-10', 'date_to' => '2030-03-10', 'items' => $item( 1 ) ) );
+	check( 'Новую заявку на занятый день не принимаем', is_wp_error( $n3 ) );
 
 	section( '4. Проверка данных брони' );
 	$before = count( gr_get_bookings() );

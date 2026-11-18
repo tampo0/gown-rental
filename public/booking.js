@@ -347,7 +347,7 @@
 				+ '<div><dt>' + (d.delivery ? 'Доставка' : 'Самовывоз') + '</dt><dd>' + esc(d.address) + '</dd></div>'
 				+ '<div class="gr-success-total"><dt>Итого</dt><dd>' + esc(d.total) + '</dd></div>'
 				+ '</dl>'
-				+ '<p class="gr-success-next"><strong>Последний шаг:</strong> отправьте нам заявку в WhatsApp — там подтвердим бронь и примем оплату. '
+				+ '<p class="gr-success-next"><strong>Последний шаг:</strong> отправьте заявку в WhatsApp и оплатите. Бронь подтверждается только после оплаты — до этого мантии могут занять другие. '
 				+ 'Без сообщения в WhatsApp бронь не действует.' + (d.delivery ? '' : ' При получении возьмите удостоверение личности — это залог.') + '</p>'
 				+ (d.whatsapp ? '<a class="gr-wa-send" href="' + esc(d.whatsapp) + '" target="_blank" rel="noopener">Отправить заявку в WhatsApp</a>' : '');
 		}

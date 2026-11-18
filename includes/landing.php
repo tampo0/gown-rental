@@ -151,7 +151,7 @@ function gr_landing_shortcode() {
 				<span class="grl-corner grl-corner-tr" aria-hidden="true"></span>
 				<span class="grl-corner grl-corner-bl" aria-hidden="true"></span>
 				<span class="grl-corner grl-corner-br" aria-hidden="true"></span>
-				<img class="grl-hero-img" src="<?php echo esc_url( gr_landing_img( 'hero-green' ) ); ?>" alt="Выпускница в зелёной мантии и шапочке держит диплом" width="1353" height="1800" fetchpriority="high">
+				<img class="grl-hero-img" src="<?php echo esc_url( gr_landing_img( 'hero-group' ) ); ?>" alt="Шесть выпускниц в зелёных мантиях поднимают дипломы" width="1302" height="1493" fetchpriority="high">
 
 				<!-- Ценник-бирка на мантии -->
 				<p class="grl-pricetag">
