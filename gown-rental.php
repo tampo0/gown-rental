@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Gown Rental — Прокат мантий
  * Description: Каталог мантий с бронированием нескольких цветов и размеров, доставка, склад и управление бронями.
- * Version:     0.15.1
+ * Version:     0.15.2
  * Author:      Tamerlan
  * Text Domain: gown-rental
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Версия плагина. При её изменении таблицы в базе обновляются автоматически.
-define( 'GR_VERSION', '0.15.1' );
+define( 'GR_VERSION', '0.15.2' );
 define( 'GR_PATH', plugin_dir_path( __FILE__ ) );
 define( 'GR_URL', plugin_dir_url( __FILE__ ) );
 

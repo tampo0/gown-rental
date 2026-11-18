@@ -154,6 +154,11 @@ function gr_ajax_submit_booking() {
 		wp_send_json_error( array( 'errors' => array( $slot_error ) ) );
 	}
 
+	// Email обязателен: на него уходит подтверждение брони.
+	if ( ! is_email( isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '' ) ) {
+		wp_send_json_error( array( 'errors' => array( 'Укажите email — на него придёт подтверждение брони.' ) ) );
+	}
+
 	// Закон РК «О персональных данных и их защите»: нужно согласие клиента.
 	if ( empty( $_POST['consent'] ) ) {
 		wp_send_json_error( array( 'errors' => array( 'Подтвердите согласие на обработку персональных данных.' ) ) );

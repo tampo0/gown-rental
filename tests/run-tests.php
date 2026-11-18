@@ -266,6 +266,9 @@ try {
 		'delivery'      => '0',
 		'items'         => wp_json_encode( $item( 1 ) ),
 	);
+	$res = call_ajax( 'gr_ajax_submit_booking', $form + array( 'consent' => '1' ) );
+	check( 'Без email бронь с сайта не принимается', isset( $res['success'] ) && false === $res['success'] && false !== strpos( implode( ' ', $res['data']['errors'] ?? array() ), 'email' ) );
+	$form['email'] = 'test@example.com';
 	$res = call_ajax( 'gr_ajax_submit_booking', $form );
 	check( 'Без галочки согласия бронь с сайта не принимается', isset( $res['success'] ) && false === $res['success'] && false !== strpos( implode( ' ', $res['data']['errors'] ?? array() ), 'согласие' ) );
 	$res = call_ajax( 'gr_ajax_submit_booking', $form + array( 'consent' => '1' ) );

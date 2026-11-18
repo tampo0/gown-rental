@@ -235,8 +235,8 @@ function gr_catalog_shortcode() {
 						</label>
 					</div>
 					<label class="grc-field">
-						<span>Email</span>
-						<input type="email" name="email" autocomplete="email">
+						<span>Email *</span>
+						<input type="email" name="email" autocomplete="email" required>
 					</label>
 					<label class="grc-field">
 						<span>Комментарий</span>
